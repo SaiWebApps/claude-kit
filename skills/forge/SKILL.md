@@ -36,16 +36,23 @@ because it is JS.)
 - Before declaring a non-trivial task done, before a commit, or before a shared-state write — feed
   the artifact as `draft` and let the gate attack it.
 
-## Speed vs precision — pick per question with `mode`
-"Fast AND precise" is a tradeoff you steer, not a free lunch:
-- `mode: "quick"` — **fast lane.** Generate → per-claim skeptic only; no 4-adversary attack, no
-  byte-quote audit. Fastest; a quick PASS is labeled in DATA ABSENT as skeptic-only. Use for
-  low-risk questions or a first pass.
-- `mode: "auto"` (default) — **tiered.** Cheap for LOW-stakes claims; fires the full 4-adversary
-  attack + audit only when a HIGH-stakes claim appears, and **keeps it sticky** for the rest of the
-  run so the final draft can't dodge scrutiny by softening its wording. A fully-verified high-stakes
-  answer takes minutes and ~1M tokens — that is the cost of proving it.
-- `mode: "deep"` — **max rigor.** Always runs the full attack even on a low-stakes draft.
+## ONE mode — depth auto-modulates on RISK (no `quick`/`auto`/`deep` flag)
+"Fast AND precise" is not a flag you pick; it is a function of how likely the answer is **wrong**.
+`forge` computes `RISK = max(stakesScore, uncertaintyScore)` ∈ {1,2,3} in JS and scales verification to it:
+- **RISK 1 (LOW)** — per-claim skeptic on every load-bearing claim only. Fast. (No PASS is ever returned
+  without ≥1 independent re-verification — the floor that kills "fast but wrong".)
+- **RISK 2 (MED)** — skeptics **+ independent byte-quote audit** of every checkable claim citation.
+- **RISK 3 (HIGH)** — skeptics + audit **+ the 3 adversaries** (DEPTH / HONESTY / REPEAT). Sticky: once any
+  cycle hits HIGH the rest of the run stays HIGH, so a softened final draft can't dodge scrutiny.
+- `stakesScore` = destructive-action stakes (HIGH_RE/ABSENCE_RE regex). `uncertaintyScore` rises with
+  claim count, perspective disagreement, thin (no-`file:line`) evidence, absence claims, and hedge density.
+  **This is why a hard, non-destructive factual question still gets attacked** — accuracy ⊥ destructiveness.
+- Every run also fires a **read-receipt + breadth-coverage auditor** (when there's anything to check): it
+  `wc -l`s each file a generator *claimed* to read (catches fabricated reads — E2) and flags HIGH-relevance
+  files the wide BREADTH sweep found that nobody read (catches shallow exploration — E3).
+- All verifiers run in **ONE concurrent wave**, not sequential tiers — the latency win over the old design.
+- The `SPEED` adversary was **removed**: it reviewed a static draft's "process" that doesn't exist, padded
+  quota-fabricated findings into the blocking sum, and caused spurious REVISE cycles. Its slot is now BREADTH.
 
 ## How to run
 ```
@@ -54,8 +61,8 @@ Workflow({
   args: {
     task:  "<one line: the question / decision / task>",
     draft: "<optional: an existing answer/output/plan to attack and improve>",
-    files: "<optional: paths the work centers on, so SCOPE points generators at them>",
-    mode:  "auto"   // "auto" (default) | "deep" (force Tier-2 adversaries) | "quick"
+    files: "<optional: paths the work centers on, so SCOPE + BREADTH point at them>"
+    // NOTE: there is no `mode`. Depth is automatic (RISK). A legacy `mode` key is accepted and IGNORED.
   }
 })
 ```
@@ -64,26 +71,25 @@ M8 guard will throw rather than return a false no-op PASS). `task` (or `draft`) 
 
 ## What it does (phases, all in `forge.js`)
 1. **SCOPE** — names the claims to resolve and the whole files to read.
-2. **GENERATE** — ≤3 perspective agents in parallel (real defs via `agentType`: always architect +
-   reviewer/tester + one topic agent), each citing evidence and reporting files read in full.
-3. **SYNTHESIZE** — merge into one draft + a flat claim list.
-4. **CLASSIFY (JS)** — each claim → LOW / MEDIUM / HIGH by deterministic regex. An agent may
-   escalate above the code-set floor, never below it (kills self-under-classification).
-5. **VERIFY (tiered)** — per-claim skeptic on MEDIUM+HIGH (cheap, pipelined); the 4 adversaries
-   (DEPTH/HONESTY/SPEED/REPEAT) fire only when a HIGH claim exists or `mode:"deep"`.
-6. **AUDIT (HIGH-stakes only)** — an independent auditor re-opens the *verifiers' own* cited bytes
-   and flags fabricated citations (defends against a lazy verifier giving a false PASS).
-7. **GATE (JS)** — `verdict = PASS` only if the JS finds **no** REVISE reason; otherwise REVISE
-   (default). The full set of REVISE triggers (all computed in code, none agent prose): a non-PROVEN
-   skeptic verdict (PROVEN requires evidence>0, quote/cite/positive-control not false), any *deferred*
-   or *missing* skeptic verdict, a blocking adversary finding (including the REPEAT adversary),
-   an unaddressed REPEAT violation, a fabricated citation from the audit, Tier-2 owed but run with
-   <3 evidenced adversaries, a high-stakes audit owed but not covering every checkable claim, any HIGH
-   claim not independently re-verified, and (in quick mode) any HIGH claim/task. Enforced by two
-   committed tests: `forge.classify.test.mjs` (the stakes regex) and `forge.coverage.test.mjs` (proves
-   every collected verifier field is actually read by the gate — no "collect-but-don't-gate" holes).
-8. **REVISE loop** — feed back only the must-fix items; re-verify; cap 2 cycles + budget guard;
-   stop early on no progress. (Quick mode is single-pass — it does not revise.)
+2. **GENERATE + BREADTH (parallel)** — ≤3 perspective agents (real defs via `agentType`: architect +
+   reviewer/tester + one topic agent), each citing evidence and emitting a `FILES I READ IN FULL` receipt;
+   **concurrently**, a BREADTH agent does a wide cheap sweep enumerating every candidate file + relevance.
+3. **SYNTHESIZE** — merge into one draft + a flat claim list + a `conflictsResolved` count.
+4. **CLASSIFY + RISK (JS)** — each claim → LOW/MED/HIGH by regex (agents may escalate, never downgrade);
+   then `RISK = max(stakes, uncertainty)` decides verification depth. No human picks a mode.
+5. **VERIFY — ONE concurrent wave** — per-claim skeptic on every claim; **+ 3 adversaries**
+   (DEPTH/HONESTY/REPEAT) at RISK 3; **+ byte-quote AUDIT** of claim citations at RISK ≥ 2; **+ read-receipt /
+   breadth-coverage auditor** whenever there's a file to check — all fired in a single `parallel()` wave.
+6. **GATE (JS)** — `verdict = PASS` only if the JS `computeGate` finds **no** REVISE reason; otherwise REVISE
+   (default). Triggers (all in code): non-PROVEN/missing skeptic, deferred claim, blocking adversary finding
+   (incl. REPEAT), unaddressed REPEAT violation, fabricated citation, adversaries owed but <3 evidenced,
+   audit owed but not covering every checkable claim, **fabricated/wrong file-read receipt (E2)**,
+   **HIGH-relevance file the breadth sweep found but nobody read (E3)**, any HIGH claim not re-verified.
+   Enforced by three committed `node` tests: `forge.classify.test.mjs` (stakes regex, 42 cases),
+   `forge.gate.test.mjs` (the verdict predicate, 19 cases), `forge.coverage.test.mjs` (every verifier
+   schema field — incl. the new COVERAGE_SCHEMA — is actually read by the gate; no collect-but-don't-gate holes).
+7. **REVISE loop** — feed back only the must-fix items; re-verify; cap 2 cycles + budget guard; stop early on
+   no progress.
 
 ## What it returns
 A structured result whose `report` field has the four mandatory headers verbatim:
@@ -91,34 +97,35 @@ A structured result whose `report` field has the four mandatory headers verbatim
 `## DATA ABSENT — unverified` · `## DECISIONS I made without you`, plus the JS-computed verdict
 basis and a per-verifier evidence audit. The verdict line carries an **assurance label** so a weak
 PASS can't masquerade as a strong one:
-- `PASS — adversarially-verified` — full Tier-2 attack + high-claim byte-quote audit ran clean.
-- `PASS — skeptic-only` — per-claim skeptic ran (e.g. quick mode), no adversary attack.
-- `PASS — LOW-stakes, self-cited only (NOT independently verified)` — nothing was re-verified.
+- `PASS — RISK 3/3: adversaries + byte-quote audit + read-receipt/coverage` — the full attack ran clean.
+- `PASS — RISK 2/3: byte-quote audit + skeptic (no adversaries)` — medium risk; claims re-verified + audited.
+- `PASS — RISK 1/3: per-claim skeptic only` — low risk; every claim still independently re-verified once.
 - `PARTIALLY-VERIFIED` — the gate could not clear a BLOCKER within the cap (reasons listed).
 The machine-readable `verdict` field stays `PASS` / `PARTIALLY-VERIFIED`; the depth is in `assurance`.
 
 ## After it returns
-- **PASS** — the draft survived independent re-verification. Ship it, but read the DATA ABSENT
-  header: LOW-stakes claims are accepted on self-citation only, and any deferred/over-cap claims are
-  listed there as not independently checked.
+- **PASS** — the draft survived independent re-verification. Every load-bearing claim was re-checked by a
+  per-claim skeptic (the floor); read the DATA ABSENT header for what depth ran (adversaries only fire at
+  RISK 3) and for any deferred/over-cap claims listed as not independently checked.
 - **PARTIALLY-VERIFIED** — the gate could not clear every BLOCKER inside the cap. The reasons are in
   the BLOCKERS header. Address them and re-run, or consciously accept the listed residual risk.
   Do **not** report the answer as verified.
 
 ## Limits (honest)
-- The verifiers are also Claude. The JS-computed verdict + the HIGH-stakes byte-quote audit +
-  default-skeptical posture make a lazy/lying verifier much harder, but a verifier that quotes real
-  bytes yet reasons wrongly can still slip — treated as residual risk, not eliminated.
-- The stakes classifier is regex. An **unmatched** verb falls to **LOW** (the *least*-verified tier) —
-  it does NOT default to HIGH. The regex is hardened to catch the common destructive wordings
-  (delete/remove/replace/reset/publish/push/deploy/drop/truncate/migrate/merge/…, conjugations
-  included) and is covered by a committed regression test (`forge.classify.test.mjs`, run with
-  `node`). But a genuinely novel high-stakes phrasing it doesn't match will under-protect — when in
-  doubt, pass `mode: "deep"` to force the full attack regardless of classification.
-- A `mode: "quick"` or all-LOW PASS is **not** independently verified — the verdict line says so
-  (see assurance label below); don't read it as authoritative.
+- The verifiers are also Claude. The JS-computed verdict + the byte-quote audit + the default-skeptical
+  posture make a lazy/lying verifier much harder, but a verifier that quotes real bytes yet reasons wrongly
+  can still slip — residual risk, not eliminated.
+- The stakes classifier is regex. An **unmatched** destructive verb falls to **LOW** stakes — but the
+  **uncertainty** half of RISK (claim count, disagreement, thin evidence, absence, hedging) can still raise
+  depth, so a novel-but-uncertain claim is not automatically under-verified. A claim that is both novel-phrased
+  *and* confidently/thinly stated is the residual gap — phrase sharply or split it so it earns its citations.
+- The **read-receipt check is existence + line-count only**: a matching `wc -l` proves a cited file exists and
+  was sized, **not** that it was read end-to-end. It catches fabricated/absent reads (the common laziness mode),
+  not a genuine partial read that reports the right line count.
 
 ## Reused primitives (independently callable; `/forge` inlines their prompt logic)
-- `~/.claude-work/workflows/adversarial-trio.js` — the 4-adversary attack (`/adversary`).
+- `~/.claude-work/workflows/adversarial-trio.js` — the standalone adversary attack (`/adversary`). NOTE:
+  `/forge` inlines only **3** of its roles (DEPTH / HONESTY / REPEAT); it dropped SPEED, which reviewed a
+  static draft's nonexistent "process" and manufactured spurious blocking findings.
 - `~/.claude-work/workflows/single-skeptic.js` — one-claim re-verification with FABRICATED-CITATION
   and absence positive-control rules.
