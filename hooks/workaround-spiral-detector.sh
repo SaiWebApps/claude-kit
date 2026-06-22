@@ -40,13 +40,13 @@ json_escape() {
 }
 
 if [[ $COUNT -ge 4 ]]; then
-  REASON="BLOCKED: WORKAROUND SPIRAL DETECTED. You have edited $(basename "$FILE_PATH") $COUNT times this session. STOP editing and DIAGNOSE: [1] What is the ROOT CAUSE of the failure? [2] Run <tool> --help -- does the tool already have a flag for this? [3] Call /meeting to get fresh perspectives. To reset this counter after proper diagnosis, run: rm $COUNTER_FILE"
+  REASON="BLOCKED: WORKAROUND SPIRAL DETECTED. You have edited $(basename "$FILE_PATH") $COUNT times this session. STOP editing and DIAGNOSE: [1] What is the ROOT CAUSE of the failure? [2] Run <tool> --help -- does the tool already have a flag for this? [3] Call /forge to get fresh perspectives. To reset this counter after proper diagnosis, run: rm $COUNTER_FILE"
   printf '{"decision":"block","reason":"%s"}\n' "$(json_escape "$REASON")"
   exit 0
 fi
 
 if [[ $COUNT -ge 3 ]]; then
-  MSG="WARNING: You have edited $(basename "$FILE_PATH") $COUNT times. One more edit triggers the workaround-spiral block. Are you recycling the same broken approach? Consider: [1] Diagnose the root cause [2] Run --help on the tool [3] Call /meeting for fresh perspectives."
+  MSG="WARNING: You have edited $(basename "$FILE_PATH") $COUNT times. One more edit triggers the workaround-spiral block. Are you recycling the same broken approach? Consider: [1] Diagnose the root cause [2] Run --help on the tool [3] Call /forge for fresh perspectives."
   printf '{"systemMessage":"%s"}\n' "$(json_escape "$MSG")"
   exit 0
 fi

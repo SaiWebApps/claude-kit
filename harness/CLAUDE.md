@@ -69,7 +69,7 @@ Pause and ask the user for guidance when ANY of these are true:
 
 ## Agent System
 
-If you have installed agent perspectives from `agents/`, consider which applies before non-trivial tasks. Use `/agent-chat <name>` for a single perspective or `/meeting <topic>` for multi-perspective discussion.
+If you have installed agent perspectives from `agents/`, consider which applies before non-trivial tasks. Use `/agent-chat <name>` for a single perspective or `/forge <topic>` for multi-perspective discussion.
 
 Before presenting non-trivial results, self-verify: Would the reviewer agent find an unverified claim? One unverified claim = PARTIALLY VERIFIED.
 

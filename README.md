@@ -12,7 +12,7 @@ cd ~/git/claude-kit
 
 After installation, start a Claude Code session and try:
 ```
-/meeting "Should I use a monorepo or polyrepo for my new project?"
+/forge "Should I use a monorepo or polyrepo for my new project?"
 ```
 
 ## What's Inside
@@ -31,8 +31,8 @@ After installation, start a Claude Code session and try:
 
 | Skill | Description |
 |-------|-------------|
-| `meeting` | Multi-perspective discussion with 4-5 parallel agents |
-| `ship` | Atomic commit-and-push with inline verification |
+| `forge` | Multi-perspective answer + hostile evidence-gated verification behind a JS gate |
+| `ship` | Atomic commit-and-push; asks where to ship on first use, remembers per-repo, creates the repo if missing |
 | `retro` | Session retrospective — catalog mistakes, extract learnings |
 | `build-fix` | Iterative build-fix cycles for JVM projects |
 | `error-diagnosis` | Structured error analysis before retrying |
@@ -57,7 +57,7 @@ Patterns are guides for building your own skills. Each includes a `PATTERN.md` e
 
 Agents are specialized perspectives that Claude adopts during reasoning. They are not separate processes — they are prompts that focus attention on a specific concern.
 
-The `/meeting` skill launches 4-5 agents in parallel on a topic, then synthesizes their perspectives into a single recommendation. Agents accumulate wisdom across meetings via persistent memory files.
+The `/forge` skill launches parallel agent perspectives on a topic, then runs hostile, evidence-gated verification behind a deterministic JS gate before returning a recommendation. Agents can accumulate wisdom across runs via persistent memory files.
 
 ### Built-in Agents
 
@@ -109,7 +109,7 @@ Copy `harness/CLAUDE.md` to your project root and customize it.
 
 1. Create `agents/<name>.md` with the agent's perspective, authority level, and focus areas
 2. Update `agents/AGENTS.md` to add it to the roster
-3. The `/meeting` skill will automatically consider it for relevant topics
+3. The `/forge` skill will automatically consider it for relevant topics
 
 ### Writing a hook
 
@@ -122,5 +122,5 @@ Copy `harness/CLAUDE.md` to your project root and customize it.
 
 - **Zero-config skills work immediately.** Copy the skill file, use the slash command. No setup, no dependencies, no configuration.
 - **Patterns teach, not template.** Each pattern explains the underlying approach so you can build skills for your own systems, not just use the examples.
-- **Agents accumulate wisdom.** Memory persists across sessions. Each meeting makes agents smarter for the next one. Domain knowledge compounds.
+- **Agents accumulate wisdom.** Memory persists across sessions. Each run makes agents smarter for the next one. Domain knowledge compounds.
 - **Hooks enforce what rules cannot.** CLAUDE.md rules are suggestions that Claude may forget. Hooks are mechanically enforced — they block the tool call before it executes.

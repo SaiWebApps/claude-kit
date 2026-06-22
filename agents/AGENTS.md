@@ -36,7 +36,7 @@ When agents produce conflicting output, merge in authority order:
 
 ### Multi-perspective discussion
 ```
-/meeting <topic>          # All agents discuss in parallel, synthesize
+/forge <topic>          # All agents discuss in parallel, synthesize
 ```
 
 ### Self-verification (mandatory for non-trivial results)
