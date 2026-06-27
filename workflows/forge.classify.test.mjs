@@ -17,7 +17,12 @@ const grab = (name) => {
 const HIGH_RE = grab('HIGH_RE')
 const ABSENCE_RE = grab('ABSENCE_RE')
 const MEDIUM_RE = grab('MEDIUM_RE')
-const classify = (t) => (HIGH_RE.test(t) || ABSENCE_RE.test(t)) ? 'HIGH' : (MEDIUM_RE.test(t) ? 'MEDIUM' : 'LOW')
+const HIGH_FALSE_POS_RE = grab('HIGH_FALSE_POS_RE')   // P15
+const STRONG_HIGH_RE = grab('STRONG_HIGH_RE')         // P15
+// MIRRORS forge.js classify() EXACTLY, including the P15 false-positive-demotion branch.
+const classify = (t) =>
+  ((HIGH_RE.test(t) || ABSENCE_RE.test(t)) && !(HIGH_FALSE_POS_RE.test(t) && !STRONG_HIGH_RE.test(t))) ? 'HIGH'
+  : MEDIUM_RE.test(t) ? 'MEDIUM' : 'LOW'
 
 const cases = [
   // --- destructive wordings that MUST be HIGH (the adversary's false-PASS battery) ---
@@ -67,6 +72,33 @@ const cases = [
   ['immigration policy is unrelated', 'LOW'],
   ['the preset theme looks nice', 'LOW'],
   ['a clean, readable structure', 'LOW'],
+  // --- P15: FALSE-POSITIVE HIGH must demote (benign collocation, no strong destructive token) ---
+  ['the writeup is clear', 'LOW'],
+  ['reset expectations with the user', 'LOW'],
+  ['a dropout layer', 'LOW'],
+  ['the writer of the test', 'LOW'],
+  ['merge conflict was about wording', 'LOW'],
+  ['kill the meeting; reschedule', 'LOW'],
+  ['append-only logs', 'LOW'],
+  // --- P15: regression — a STRONG destructive token VETOES demotion even with a benign collocation present ---
+  ['rm -rf the writeup dir', 'HIGH'],
+  ['git reset --hard then write the report', 'HIGH'],
+  ['the commitment to push the change', 'HIGH'],
+  // --- P14: numeric / status / boolean VALUE assertions → at least MEDIUM (fabrication-prone) ---
+  ['the config value is 5', 'MEDIUM'],
+  ['responds with status 200', 'MEDIUM'],
+  ['threshold equals 0.5', 'MEDIUM'],
+  ['the count is 0', 'MEDIUM'],
+  ['latency improves by 20 percent', 'MEDIUM'],
+  ['exit code 1', 'MEDIUM'],
+  // --- P14: presence-negation phrasings → HIGH (absence discipline) ---
+  ['this data was not present in the table', 'HIGH'],
+  ['recordCount is zero in that partition', 'HIGH'],
+  // --- P14: LOW guardrails — the widening must NOT bleed onto benign prose ---
+  ['this is not a problem', 'LOW'],
+  ['there is no objection', 'LOW'],
+  ['the value is clarity', 'LOW'],
+  ['success equals effort', 'LOW'],
 ]
 
 let fail = 0
@@ -78,5 +110,18 @@ for (const [text, want] of cases) {
     : got === 'LOW'
   if (!ok) { console.log(`FAIL  want=${want} got=${got}  "${text}"`); fail++ }
 }
-if (fail) { console.log(`\n${fail}/${cases.length} FAILED`); process.exit(1) }
-console.log(`classify regression: ${cases.length}/${cases.length} PASS`)
+
+// A3: CHANGE_RE must detect change-verification INTENT without over-firing on benign "I changed my mind" prose.
+const CHANGE_RE = grab('CHANGE_RE')
+const changeCases = [
+  ['verify my change', true], ['review this diff', true], ['check the PR', true], ['git diff HEAD', true], ['before I commit', true],
+  ['I changed my mind', false], ['I wrote a poem', false], ['I added milk to the list', false],
+  ['what is the capital of France', false], ['a staged rollout to prod', false],
+]
+for (const [text, want] of changeCases) {
+  const got = CHANGE_RE.test(text)
+  if (got !== want) { console.log(`FAIL  CHANGE_RE("${text}") want=${want} got=${got}`); fail++ }
+}
+
+if (fail) { console.log(`\n${fail} case(s) FAILED`); process.exit(1) }
+console.log(`classify regression: ${cases.length}/${cases.length} PASS · CHANGE_RE: ${changeCases.length}/${changeCases.length} PASS`)

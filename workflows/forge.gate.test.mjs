@@ -17,6 +17,11 @@ const isProvenSrc = slice('const isProven', '\n\n')
 const gateSrc     = slice('// >>> COMPUTE-GATE', '// <<< COMPUTE-GATE')
 // eslint-disable-next-line no-new-func
 const computeGate = new Function(isProvenSrc + '\n' + gateSrc + '\nreturn computeGate;')()
+// P7/P16/P17: the adversary-trigger helper lives OUTSIDE the COMPUTE-GATE sentinels — grab + eval it too.
+const sraMatch = src.match(/const shouldRunAdversaries = [^\n]*/)
+if (!sraMatch) throw new Error('shouldRunAdversaries not found in forge.js (refactor moved it?)')
+// eslint-disable-next-line no-new-func
+const shouldRunAdversaries = new Function(sraMatch[0] + '\nreturn shouldRunAdversaries;')()
 
 // ---- fixtures ----
 const highClaim = { id: 1, text: 'deletes the prod users table || EVIDENCE: x.js:42 || QUOTE: foo', stakes: 'HIGH' }
@@ -28,11 +33,19 @@ const goodAudit = { auditedCount: 1, fabricatedCount: 0, evidenceItemsCount: 2 }
 const goodCov   = { reviewedReceipts: 1, receiptMismatchCount: 0, highRelevanceUncovered: 0, evidenceItemsCount: 2 }
 const base = { claimObjs: [highClaim], high: [highClaim], sv: [proven], toSkeptic: [highClaim],
                anyHigh: true, runAdversaries: true, runAudit: true, coverageOwed: true, deferred: 0, maxVerify: 8,
-               adv: fullAdv(), audit: goodAudit, cov: goodCov }
+               adv: fullAdv(), audit: goodAudit, cov: goodCov, digestOk: true, isChangeTask: false, gitGroundingOk: true }
 
 const lowBase = { claimObjs: [lowClaim], high: [], sv: [{ ...proven }], toSkeptic: [lowClaim],
                   anyHigh: false, runAdversaries: false, runAudit: false, coverageOwed: false, deferred: 0, maxVerify: 8,
-                  adv: null, audit: null, cov: null }
+                  adv: null, audit: null, cov: null, digestOk: true, isChangeTask: false, gitGroundingOk: true }
+
+// P11/P20: two MEDIUM claims (no file:line) for the per-claim all-stakes id-coverage cases.
+const m1 = { id: 1, text: 'the field is named foo', stakes: 'MEDIUM' }
+const m2 = { id: 2, text: 'the flag defaults to true', stakes: 'MEDIUM' }
+const medBase = { claimObjs: [m1, m2], high: [], toSkeptic: [m1, m2], anyHigh: false,
+                  runAdversaries: false, runAudit: false, coverageOwed: false, deferred: 0, maxVerify: 8,
+                  adv: null, audit: null, cov: null, digestOk: true, isChangeTask: false, gitGroundingOk: true,
+                  sv: [{ ...proven, claimId: 1 }] }
 
 const cases = [
   ['clean HIGH path → PASS (not vacuously REVISE)', { ...base }, 'PASS'],
@@ -54,6 +67,21 @@ const cases = [
   ['E2 receipt mismatch (fabricated file-read) → REVISE', { ...base, cov: { ...goodCov, receiptMismatchCount: 1, details: 'foo.js claimed 100 lines, actually 12' } }, 'REVISE'],
   ['E3 HIGH-relevance file never read → REVISE', { ...base, cov: { ...goodCov, highRelevanceUncovered: 1, details: 'never read /a/b/Dao.scala' } }, 'REVISE'],
   ['coverage owed but null → REVISE', { ...base, cov: null }, 'REVISE'],
+  // --- P12: integrity fields must be AFFIRMATIVELY true (omitted no longer passes) ---
+  ['skeptic PROVEN but quoteMatches OMITTED → REVISE', { ...base, sv: [{ claimId: 1, verdict: 'PROVEN', evidenceItemsCount: 1, citedFileChecked: true, positiveControlOk: true }] }, 'REVISE'],
+  ['skeptic PROVEN but positiveControlOk OMITTED → REVISE', { ...base, sv: [{ claimId: 1, verdict: 'PROVEN', evidenceItemsCount: 1, quoteMatches: true, citedFileChecked: true }] }, 'REVISE'],
+  ['file-citing claim but citedFileChecked=false → REVISE (claim-aware)', { ...base, sv: [{ ...proven, citedFileChecked: false }] }, 'REVISE'],
+  ['no-citation LOW with citedFileChecked=false but quote/positive true → PASS', { ...lowBase, sv: [{ claimId: 1, verdict: 'PROVEN', evidenceItemsCount: 1, quoteMatches: true, positiveControlOk: true, citedFileChecked: false }] }, 'PASS'],
+  // --- P11/P20: per-claim id-coverage for ALL stakes (not just HIGH) ---
+  ['MED claim #2 left unverified (id mismatch) → REVISE', { ...medBase }, 'REVISE'],
+  ['duplicate skeptic id over 2 MED claims → REVISE', { ...medBase, sv: [{ ...proven, claimId: 1 }, { ...proven, claimId: 1 }] }, 'REVISE'],
+  ['both MED claims properly verified → PASS', { ...medBase, sv: [{ ...proven, claimId: 1 }, { ...proven, claimId: 2 }] }, 'PASS'],
+  // --- P22: force-load digest must have loaded (cycle-0 constant) ---
+  ['PRIME digest did not load (digestOk=false) → REVISE', { ...base, digestOk: false }, 'REVISE'],
+  ['LOW-only but digest failed → REVISE (force-load is mandatory even at LOW)', { ...lowBase, digestOk: false }, 'REVISE'],
+  // --- P1/S9: a change task must be git-grounded ---
+  ['change task but breadth never ran git (gitGroundingOk=false) → REVISE', { ...base, isChangeTask: true, gitGroundingOk: false }, 'REVISE'],
+  ['change task WITH git grounding → PASS', { ...base, isChangeTask: true, gitGroundingOk: true }, 'PASS'],
 ]
 
 let fail = 0
@@ -63,4 +91,20 @@ for (const [name, input, want] of cases) {
   if (got !== want) { console.log(`FAIL  ${name}: want=${want} got=${got}`); fail++ }
 }
 if (fail) { console.log(`\n${fail}/${cases.length} gate cases FAILED`); process.exit(1) }
-console.log(`gate-predicate: ${cases.length}/${cases.length} PASS`)
+
+// --- P7/P16/P17: shouldRunAdversaries(risk, cycle, prevAdvRisk) ---
+const sraCases = [
+  [[3, 0, 0], true,  'cycle 0 at HIGH → attack'],
+  [[3, 1, 3], false, 'flat HIGH on revise → no re-attack'],
+  [[3, 1, 2], true,  'risk ROSE on revise → re-attack'],
+  [[3, 2, 0], true,  'first HIGH at cycle 2 (cycle-0 was low) → attack'],
+  [[2, 0, 0], false, 'MED at cycle 0 → no adversaries'],
+  [[1, 0, 0], false, 'LOW → no adversaries'],
+]
+let sfail = 0
+for (const [[r, c, p], want, desc] of sraCases) {
+  const got = shouldRunAdversaries(r, c, p)
+  if (got !== want) { console.log(`FAIL  shouldRunAdversaries(${r},${c},${p}) want=${want} got=${got} — ${desc}`); sfail++ }
+}
+if (sfail) { console.log(`\n${sfail}/${sraCases.length} adversary-trigger cases FAILED`); process.exit(1) }
+console.log(`gate-predicate: ${cases.length}/${cases.length} PASS · adversary-trigger: ${sraCases.length}/${sraCases.length} PASS`)
