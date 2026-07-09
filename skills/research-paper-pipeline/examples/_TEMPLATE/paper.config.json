@@ -1,0 +1,22 @@
+{
+  "profile": "generic",
+  "voice": "sai",
+  "title": "Your Paper Title",
+  "running_head": "Short Title",
+  "content_dir": "content",
+  "notes_file": "config/notes.json",
+  "exhibits_file": "content/Exhibits.md",
+  "authors": [
+    {"name": "First Last", "credential": "Title; Affiliation", "bio": "One or two sentences."}
+  ],
+  "byline_note": "Optional personal-capacity or funding note.",
+  "abstract": "Your abstract. Match the length to your target profile.",
+  "keywords": ["keyword one", "keyword two", "keyword three"],
+  "ai_disclosure": "Describe how AI assisted and confirm the authors verified everything.",
+  "blind_extra_tokens": ["affiliation-words", "to-scrub-for-blind-review"],
+  "sections": [
+    {"file": "Section_1.md", "heading": "## 1. Introduction"},
+    {"file": "Section_2.md", "heading": "## 2. ..."}
+  ],
+  "figures": []
+}

@@ -1,0 +1,79 @@
+{
+ "name": "sai",
+ "description": "Sai's professional voice redlines and LLM-tell watchlist. Hard rules block the build; warn rules are flagged for review.",
+ "hard": {
+  "em_dash": {
+   "pattern": "\u2014",
+   "flags": "",
+   "message": "Em-dash banned (budget 0). Use period / colon / semicolon / parentheses / restructure."
+  },
+  "and_yet": {
+   "pattern": "\\band\\s+yet\\b",
+   "flags": "i",
+   "message": "\"And yet\" banned. Use \"Yet\"."
+  },
+  "dash_aside": {
+   "pattern": "\u2014[^\u2014]{1,40}\u2014",
+   "flags": "",
+   "message": "Dash-bracketed aside. Use parentheses with the editorial \"let us\"."
+  }
+ },
+ "warn": {
+  "in_todays": {
+   "pattern": "in today'?s\\b",
+   "flags": "i"
+  },
+  "evolving": {
+   "pattern": "(rapidly|ever)[ -]evolving|ever[ -]changing",
+   "flags": "i"
+  },
+  "important_to_note": {
+   "pattern": "it (?:is|'s) (?:important to note|worth noting)",
+   "flags": "i"
+  },
+  "in_conclusion": {
+   "pattern": "\\bin conclusion\\b",
+   "flags": "i"
+  },
+  "delve": {
+   "pattern": "\\bdelv(?:e|es|ing)\\b",
+   "flags": "i"
+  },
+  "testament_to": {
+   "pattern": "\\btestament to\\b",
+   "flags": "i"
+  },
+  "underscore": {
+   "pattern": "\\bunderscor(?:e|es|ing)\\b",
+   "flags": "i"
+  },
+  "moreover_opener": {
+   "pattern": "^\\s*(?:moreover|furthermore|additionally)\\b",
+   "flags": "i"
+  },
+  "not_just_but": {
+   "pattern": "\\bnot just\\b.{0,60}\\b(?:but|it'?s)\\b",
+   "flags": "i"
+  },
+  "spaced_en_dash": {
+   "pattern": "\\s\u2013\\s",
+   "flags": ""
+  },
+  "casual_attribution": {
+   "pattern": "\\band colleagues\\b|\\bresearchers (?:found|showed|examined|re-examined)\\b|\\ba (?:standard|recent) (?:study|benchmark|trial)\\b",
+   "flags": "i"
+  },
+  "ai_lexicon": {
+   "pattern": "\\b(tapestry|multifaceted|leverage|leverages|leveraging|showcase|showcases|realm|landscape|seamless|seamlessly|robust|pivotal|crucial|myriad|plethora|nuanced|holistic|synerg\\w+|treasure trove|boasts?|navigat\\w+ the)\\b",
+   "flags": "i"
+  },
+  "crucial_role": {
+   "pattern": "plays? a (?:crucial|vital|key|pivotal|significant) role",
+   "flags": "i"
+  },
+  "rich_tapestry": {
+   "pattern": "rich tapestry|intricate (?:tapestry|web|dance)",
+   "flags": "i"
+  }
+ }
+}

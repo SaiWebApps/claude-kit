@@ -1,0 +1,309 @@
+{
+ "_comment": "Per-paper citation notes. Each key maps an author-date citation to its full + shortened Chicago note and the regex patterns that match it in the drafts. mode A keeps the captured author name and appends the marker; mode B replaces the parenthetical with the marker only.",
+ "notes": {
+  "peng": {
+   "full": "Sida Peng et al., \"The Impact of AI on Developer Productivity: Evidence from GitHub Copilot\" (arXiv preprint 2302.06590, 2023).",
+   "short": "Peng et al., \"The Impact of AI on Developer Productivity.\"",
+   "patterns": [
+    [
+     "A",
+     "(Peng et al\\.) \\(2023\\)"
+    ]
+   ]
+  },
+  "bryn": {
+   "full": "Erik Brynjolfsson et al., \"Canaries in the Coal Mine? Six Facts about the Recent Employment Effects of Artificial Intelligence\" (working paper, Stanford Digital Economy Lab, 2025).",
+   "short": "Brynjolfsson et al., \"Canaries in the Coal Mine?\"",
+   "patterns": [
+    [
+     "A",
+     "(Brynjolfsson et al\\.) \\(2025\\)"
+    ],
+    [
+     "B",
+     " \\(Brynjolfsson et al\\., 2025\\)"
+    ]
+   ]
+  },
+  "lewis": {
+   "full": "Patrick Lewis et al., \"Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks,\" in Advances in Neural Information Processing Systems 33 (2020): 9459–9474.",
+   "short": "Lewis et al., \"Retrieval-Augmented Generation.\"",
+   "patterns": [
+    [
+     "B",
+     " \\(Lewis et al\\., 2020\\)"
+    ]
+   ]
+  },
+  "yao": {
+   "full": "Shunyu Yao et al., \"ReAct: Synergizing Reasoning and Acting in Language Models\" (paper presented at the International Conference on Learning Representations, 2023).",
+   "short": "Yao et al., \"ReAct.\"",
+   "patterns": [
+    [
+     "B",
+     " \\(Yao et al\\., 2023\\)"
+    ]
+   ]
+  },
+  "jimenez": {
+   "full": "Carlos E. Jimenez et al., \"SWE-bench: Can Language Models Resolve Real-World GitHub Issues?\" (paper presented at the International Conference on Learning Representations, 2024).",
+   "short": "Jimenez et al., \"SWE-bench.\"",
+   "patterns": [
+    [
+     "B",
+     " \\(Jimenez et al\\., 2024\\)"
+    ]
+   ]
+  },
+  "swelb": {
+   "full": "SWE-bench Verified public leaderboard (accessed June 2026), late-2025 results for frontier coding systems (resolution rates of roughly 75 to 85 percent depending on scaffold); leaderboard figures are vendor-reported and not peer-reviewed.",
+   "short": "SWE-bench Verified public leaderboard, late 2025.",
+   "patterns": [
+    [
+     "A",
+     "(per the public leaderboard data)"
+    ]
+   ]
+  },
+  "yu": {
+   "full": "Boxi Yu et al., \"SWE-ABS: Adversarial Benchmark Strengthening Exposes Inflated Success Rates on Test-Based Benchmarks\" (arXiv preprint 2603.00520, 2026).",
+   "short": "Yu et al., \"SWE-ABS.\"",
+   "patterns": [
+    [
+     "A",
+     "(Yu et al\\.) \\(2026\\)"
+    ]
+   ]
+  },
+  "metr": {
+   "full": "METR, \"Measuring the Impact of Early-2025 AI on Experienced Open-Source Developer Productivity\" (research report, 2025), arXiv preprint 2507.09089; METR notes that these early-2025 results are a point-in-time snapshot, since revised by later measurements.",
+   "short": "METR, \"Measuring the Impact of Early-2025 AI.\"",
+   "patterns": [
+    [
+     "A",
+     "(METR) \\(2025\\)"
+    ]
+   ]
+  },
+  "gitclear": {
+   "full": "GitClear, AI Copilot Code Quality: 2025 Look Back at 12 Months of Data (industry research report, 2025).",
+   "short": "GitClear, AI Copilot Code Quality.",
+   "patterns": [
+    [
+     "A",
+     "(GitClear) \\(2025\\)"
+    ]
+   ]
+  },
+  "bb": {
+   "full": "Alberto Bacchelli and Christian Bird, \"Expectations, Outcomes, and Challenges of Modern Code Review,\" in Proceedings of the 35th International Conference on Software Engineering (2013).",
+   "short": "Bacchelli and Bird, \"Expectations, Outcomes, and Challenges of Modern Code Review.\"",
+   "patterns": [
+    [
+     "A",
+     "(Bacchelli and Bird) \\(2013\\)"
+    ]
+   ]
+  },
+  "sadowski": {
+   "full": "Caitlin Sadowski et al., \"Modern Code Review: A Case Study at Google,\" in Proceedings of the 40th International Conference on Software Engineering: Software Engineering in Practice (2018).",
+   "short": "Sadowski et al., \"Modern Code Review.\"",
+   "patterns": [
+    [
+     "A",
+     "(Sadowski et al\\.) \\(2018\\)"
+    ]
+   ]
+  },
+  "dibiase": {
+   "full": "Marco di Biase et al., \"The Effects of Change Decomposition on Code Review: A Controlled Experiment,\" PeerJ Computer Science 5 (2019): e193.",
+   "short": "di Biase et al., \"The Effects of Change Decomposition on Code Review.\"",
+   "patterns": [
+    [
+     "A",
+     "(di Biase et al\\.) \\(2019\\)"
+    ]
+   ]
+  },
+  "cohen": {
+   "full": "Jason Cohen, Best Kept Secrets of Peer Code Review (Austin, TX: Smart Bear, 2006).",
+   "short": "Cohen, Best Kept Secrets of Peer Code Review.",
+   "patterns": [
+    [
+     "A",
+     "(Cohen) \\(2006\\)"
+    ]
+   ]
+  },
+  "doshi": {
+   "full": "Anil R. Doshi and Oliver P. Hauser, \"Generative AI Enhances Individual Creativity but Reduces the Collective Diversity of Novel Content,\" Science Advances 10, no. 28 (2024): eadn5290.",
+   "short": "Doshi and Hauser, \"Generative AI Enhances Individual Creativity.\"",
+   "patterns": [
+    [
+     "A",
+     "(Doshi and Hauser) \\(2024\\)"
+    ]
+   ]
+  },
+  "padma": {
+   "full": "Vishakh Padmakumar and He He, \"Does Writing with Language Models Reduce Content Diversity?\" (paper presented at the International Conference on Learning Representations, 2024).",
+   "short": "Padmakumar and He, \"Does Writing with Language Models Reduce Content Diversity?\"",
+   "patterns": [
+    [
+     "A",
+     "(Padmakumar and He) \\(2024\\)"
+    ]
+   ]
+  },
+  "anderson": {
+   "full": "Barrett R. Anderson et al., \"Homogenization Effects of Large Language Models on Human Creative Ideation,\" in Proceedings of the 16th Conference on Creativity & Cognition (2024).",
+   "short": "Anderson et al., \"Homogenization Effects of Large Language Models.\"",
+   "patterns": [
+    [
+     "A",
+     "(Anderson et al\\.) \\(2024\\)"
+    ]
+   ]
+  },
+  "huh": {
+   "full": "Minyoung Huh et al., \"Position: The Platonic Representation Hypothesis\" (paper presented at the International Conference on Machine Learning, 2024).",
+   "short": "Huh et al., \"Position: The Platonic Representation Hypothesis.\"",
+   "patterns": [
+    [
+     "A",
+     "(Huh et al\\.) \\(2024\\)"
+    ]
+   ]
+  },
+  "kanter": {
+   "full": "Rosabeth Moss Kanter, \"Ten Reasons People Resist Change,\" Harvard Business Review (online), September 25, 2012.",
+   "short": "Kanter, \"Ten Reasons People Resist Change.\"",
+   "patterns": [
+    [
+     "B",
+     " \\(Kanter, 2012\\)"
+    ]
+   ]
+  },
+  "bower": {
+   "full": "Joseph L. Bower and Clayton M. Christensen, \"Disruptive Technologies: Catching the Wave,\" Harvard Business Review 73, no. 1 (1995): 43–53.",
+   "short": "Bower and Christensen, \"Disruptive Technologies.\"",
+   "patterns": [
+    [
+     "B",
+     " \\(Bower and Christensen, 1995\\)"
+    ]
+   ]
+  },
+  "huy": {
+   "full": "Quy Nguyen Huy, \"In Praise of Middle Managers,\" Harvard Business Review 79, no. 8 (2001): 72–81.",
+   "short": "Huy, \"In Praise of Middle Managers.\"",
+   "patterns": [
+    [
+     "A",
+     "(Huy) \\(2001\\)"
+    ]
+   ]
+  },
+  "becker": {
+   "full": "Gary S. Becker, Human Capital: A Theoretical and Empirical Analysis, with Special Reference to Education (New York: Columbia University Press, 1964).",
+   "short": "Becker, Human Capital.",
+   "patterns": [
+    [
+     "A",
+     "(Becker) \\(1964\\)"
+    ]
+   ]
+  },
+  "eu": {
+   "full": "Regulation (EU) 2024/1689 of the European Parliament and of the Council (Artificial Intelligence Act), art. 14 (human oversight), esp. art. 14(1) and art. 14(4)(b).",
+   "short": "AI Act, art. 14.",
+   "patterns": [
+    [
+     "B",
+     " \\(European Union, 2024\\)"
+    ]
+   ]
+  },
+  "march": {
+   "full": "James G. March, \"Exploration and Exploitation in Organizational Learning,\" Organization Science 2, no. 1 (1991): 71–87.",
+   "short": "March, \"Exploration and Exploitation.\"",
+   "patterns": [
+    [
+     "A",
+     "(March) \\(1991\\)"
+    ]
+   ]
+  },
+  "janis": {
+   "full": "Irving L. Janis, Victims of Groupthink: A Psychological Study of Foreign-Policy Decisions and Fiascoes (Boston: Houghton Mifflin, 1972).",
+   "short": "Janis, Victims of Groupthink.",
+   "patterns": [
+    [
+     "A",
+     "(Janis) \\(1972\\)"
+    ]
+   ]
+  },
+  "autor": {
+   "full": "David H. Autor, \"Why Are There Still So Many Jobs? The History and Future of Workplace Automation,\" Journal of Economic Perspectives 29, no. 3 (2015): 3–30.",
+   "short": "Autor, \"Why Are There Still So Many Jobs?\"",
+   "patterns": [
+    [
+     "A",
+     "(Autor) \\(2015\\)"
+    ]
+   ]
+  },
+  "bessen": {
+   "full": "James Bessen, \"Automation and Jobs: When Technology Boosts Employment,\" Economic Policy 34, no. 100 (2019): 589–626.",
+   "short": "Bessen, \"Automation and Jobs.\"",
+   "patterns": [
+    [
+     "A",
+     "(Bessen) \\(2019\\)"
+    ]
+   ]
+  },
+  "dakhel": {
+   "full": "Arghavan Moradi Dakhel et al., \"GitHub Copilot AI Pair Programmer: Asset or Liability?\" Journal of Systems and Software (2023).",
+   "short": "Moradi Dakhel et al., \"GitHub Copilot AI Pair Programmer.\"",
+   "patterns": [
+    [
+     "A",
+     "(Moradi Dakhel et al\\.) \\(2023\\)"
+    ]
+   ]
+  },
+  "cui": {
+   "full": "Zheyuan Cui et al., \"The Effects of Generative AI on High-Skilled Work: Evidence from Three Field Experiments with Software Developers,\" Management Science (2025).",
+   "short": "Cui et al., \"The Effects of Generative AI on High-Skilled Work.\"",
+   "patterns": [
+    [
+     "A",
+     "(Cui et al\\.) \\(2025\\)"
+    ]
+   ]
+  },
+  "perry": {
+   "full": "Neil Perry et al., \"Do Users Write More Insecure Code with AI Assistants?\" in Proceedings of the 2023 ACM SIGSAC Conference on Computer and Communications Security (2023): 2785–2799.",
+   "short": "Perry et al., \"Do Users Write More Insecure Code with AI Assistants?\"",
+   "patterns": [
+    [
+     "A",
+     "(Perry et al\\.) \\(2023\\)"
+    ]
+   ]
+  },
+  "dora": {
+   "full": "DORA, Accelerate State of DevOps Report 2024 (Google Cloud, 2024).",
+   "short": "DORA, Accelerate State of DevOps Report 2024.",
+   "patterns": [
+    [
+     "B",
+     " \\(DORA, 2024\\)"
+    ]
+   ]
+  }
+ }
+}

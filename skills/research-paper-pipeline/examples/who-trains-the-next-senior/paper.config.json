@@ -1,0 +1,91 @@
+{
+ "profile": "cmr",
+ "voice": "sai",
+ "title": "Who Trains the Next Senior? Managing Software Engineering When AI Makes Code Cheap",
+ "running_head": "Who Trains the Next Senior?",
+ "content_dir": "content",
+ "notes_file": "config/notes.json",
+ "exhibits_file": "content/Exhibits.md",
+ "authors": [
+  {
+   "name": "Gajendra Babu Thokala",
+   "credential": "Senior Engineering Leader; Fellow, British Computer Society",
+   "bio": "Gajendra Babu Thokala is a Senior Engineering Leader and a Fellow of the British Computer Society (FBCS). His work focuses on enterprise data platforms, large-scale software engineering, and the organizational implications of artificial intelligence, and he has led engineering and data teams in regulated industries."
+  },
+  {
+   "name": "Sairam B. Krishnan",
+   "credential": "Senior Engineering Leader; Wharton Executive MBA",
+   "bio": "Sairam B. Krishnan is a Senior Engineering Leader who holds an Executive MBA from the Wharton School of the University of Pennsylvania. His work spans large-scale data and machine-learning systems and the leadership of engineering organizations through technological change."
+  }
+ ],
+ "byline_note": "The authors write in a personal capacity; the views expressed are their own and not those of any employer.",
+ "abstract": "Generative and agentic AI have made the routine work of software engineering nearly free, and the first casualty is the junior engineer. Cheap machine-made code commoditizes breadth, the plausible and conventional, while raising the value of two scarce human contributions: depth, the judgment of which answer is right in this system, and divergence, the perspective outside the consensus. Left to inertia, organizations slide into substitution, hollowing out review, apprenticeship, and the diversity of their output. The alternative, complementarity, is a set of moves: shrink the unit of review, tier scrutiny by consequence, measure what is scarce, and rebuild the apprenticeship.",
+ "keywords": [
+  "generative AI",
+  "agentic AI",
+  "software engineering",
+  "code review",
+  "apprenticeship",
+  "engineering management",
+  "human capital"
+ ],
+ "ai_disclosure": "The authors developed the article's thesis, argument, and analysis, which build on their own professional expertise and prior work. They used Anthropic's Claude, an AI assistant, to help draft and edit the manuscript text in their own writing style and to their specifications, to compile and format citations in the required style, and to generate Figure 1. The authors directed all substantive content, independently verified the accuracy of all claims, data, and references, and take full responsibility for the article's content.",
+ "blind_extra_tokens": [
+  "wharton",
+  "british computer society",
+  "personal capacity"
+ ],
+ "sections": [
+  {
+   "file": "Draft_Opening_v2.md",
+   "heading": "## 1. Introduction"
+  },
+  {
+   "file": "Draft_TechPrimer_v1.md",
+   "heading": "## 2. The Technology in Brief"
+  },
+  {
+   "file": "Draft_OrderOfFall_v1.md",
+   "heading": "## 3. The Order in Which the Work Falls"
+  },
+  {
+   "file": "Draft_ReviewTheater_v1.md",
+   "heading": "## 4. Review Theater: When Verification Becomes the Bottleneck"
+  },
+  {
+   "file": "Draft_Prescriptions_v1.md",
+   "heading": "## 5. Two Moves: Shrink the Unit, Tier the Scrutiny"
+  },
+  {
+   "file": "Draft_JuniorDivergence_v1.md",
+   "heading": "## 6. The Junior as a Source of Divergence"
+  },
+  {
+   "file": "Draft_MeasurementStaffing_v1.md",
+   "heading": "## 7. What to Measure, and Whom to Hire"
+  },
+  {
+   "file": "Draft_PipelineCase_v1.md",
+   "heading": "## 8. The Case of the Enterprise Data Pipeline"
+  },
+  {
+   "file": "Draft_Risks_v1.md",
+   "heading": "## 9. Risks and Conditions of Reversal"
+  },
+  {
+   "file": "Draft_Conclusion_v1.md",
+   "heading": "## 10. Conclusion"
+  }
+ ],
+ "figures": [
+  {
+   "name": "figure1_order_of_fall.png",
+   "script": "figure1.py"
+  }
+ ],
+ "build": {
+  "manuscript": "Manuscript_blind.docx",
+  "title_page": "Title_Page.docx",
+  "exhibits": "Exhibits_File.docx"
+ }
+}

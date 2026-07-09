@@ -1,0 +1,20 @@
+{
+  "profile": "mit-smr",
+  "voice": "sai",
+  "title": "The Quiet Power of Checklists",
+  "running_head": "The Quiet Power of Checklists",
+  "content_dir": "content",
+  "notes_file": "config/notes.json",
+  "authors": [
+    {"name": "A. N. Author", "credential": "Staff Engineer", "bio": "A. N. Author is a placeholder byline used to demonstrate this pipeline end to end."}
+  ],
+  "byline_note": "This is a synthetic example, not a real submission.",
+  "keywords": ["checklists", "reliability", "management"],
+  "ai_disclosure": "This demo was generated to exercise the pipeline. It makes no factual claims beyond its three cited sources.",
+  "sections": [
+    {"file": "Draft_1_Tool.md",   "heading": "## 1. The Unglamorous Tool"},
+    {"file": "Draft_2_Memory.md", "heading": "## 2. Why a List Beats a Memory"},
+    {"file": "Draft_3_Limits.md", "heading": "## 3. When the List Stops Helping"}
+  ],
+  "figures": []
+}

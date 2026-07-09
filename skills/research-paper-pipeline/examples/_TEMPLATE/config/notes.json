@@ -1,0 +1,10 @@
+{
+  "_comment": "One entry per source. mode A keeps the captured author name then appends the marker; mode B replaces the parenthetical with the marker only.",
+  "notes": {
+    "author-key": {
+      "full": "First Last, \"Title of Work,\" Journal 1, no. 1 (Year): 1-10.",
+      "short": "Last, \"Short Title.\"",
+      "patterns": [["A", "(Last) \\(Year\\)"], ["B", " \\(Last, Year\\)"]]
+    }
+  }
+}

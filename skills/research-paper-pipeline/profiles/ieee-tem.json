@@ -1,0 +1,51 @@
+{
+  "id": "ieee-tem",
+  "name": "IEEE Transactions on Engineering Management",
+  "publisher": "IEEE",
+  "guidelines_url": "https://www.ieee-tems.org/guidelines-for-authors/",
+  "guidelines_verified": "2026-07",
+  "submission_model": "manuscript",
+  "review_type": "double_blind",
+  "anonymized_manuscript_required": true,
+  "title_page_separate": true,
+  "file_types": [".doc", ".docx", ".pdf", ".rtf", ".wpd"],
+  "template": null,
+  "length": {"unit": "pages", "min": null, "max": 38, "basis": "double-spaced single-column initial submission; 42 pages for review articles", "inclusions": "all", "note": "Final formatted equivalent <=15 printed pages (research); overlength charge $200 per additional printed page."},
+  "abstract": {"required": true, "min_words": 200, "max_words": 250, "structured": false, "note": "On the first page. Must not contain concepts or conclusions beyond those in the paper."},
+  "extra_front_matter": [
+    {"name": "Managerial Relevance Statement", "min_words": 150, "max_words": 200, "location": "first_page", "note": "Distinctive to TEM. Required."}
+  ],
+  "keywords": {"required": false, "min": null, "note": "Index terms not stated on the society guidelines page; IEEE generally expects them via the Author Center."},
+  "citation_style": "IEEE numbered, square brackets, e.g., [12].",
+  "reference_presentation": "numbered_reflist",
+  "reference_order": "citation",
+  "references_numbered": true,
+  "etal_rule": null,
+  "formatting": {"spacing": "double", "font_pt": 12, "font_family": "Times New Roman", "page_size": null, "margins_in": 1.0, "note": "Double-spaced, 12pt, single-column, 1-inch margins. Page size not specified."},
+  "figures_tables": {"placement": "separate_file", "callouts": true, "note": "Refer to all illustrations in text; captions on a separate caption list; professional quality."},
+  "headings": {"max_levels": null},
+  "cover_letter": {"required": false, "contents": [], "note": "Not specified; one corresponding author designated."},
+  "ai_disclosure": {"required": false, "where": "not_specified", "source": "publisher", "note": "IEEE has a publisher-wide AI policy via the IEEE Author Center; not restated on this page."},
+  "distinctive_rules": [
+    "Mandatory 150-200 word Managerial Relevance Statement on the first page.",
+    "Overlength page charges ($200/printed page over the limit).",
+    "References ordered by citation order, not alphabetized.",
+    "Explanatory footnotes numbered separately at the bottom of their page; funding as a footnote.",
+    "Papers that only describe technical tools/algorithms are out of scope."
+  ],
+  "checks": {
+    "require_blind": true, "blind_check_metadata": true, "blind_check_filenames": true,
+    "abstract_required": true, "abstract_word_min": 200, "abstract_word_max": 250,
+    "keywords_min": null,
+    "reference_model": "reflist", "endnotes_contiguous": false, "endnotes_no_reflist": false,
+    "reference_list_required": true, "reference_marker_style": "bracket", "etal_first_author": false,
+    "exhibits_placement": "separate_file", "require_callouts": true,
+    "no_inline_tables": false, "no_inline_images": false,
+    "spacing": "double", "min_line_twips": 480, "font_min_halfpt": 24, "default_font_halfpt": 24,
+    "page_size": null, "margins_twips": 1440,
+    "heading_levels_min": null,
+    "length_unit": "pages", "length_min": null, "length_max": null,
+    "extra_front_matter_required": ["Managerial Relevance"],
+    "no_em_dash": true, "no_markdown_leak": true
+  }
+}

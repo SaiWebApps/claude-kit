@@ -1,0 +1,10 @@
+{
+  "name": "TEMPLATE",
+  "description": "Copy to <yourname>.redlines.json. 'hard' rules block the build; 'warn' rules are flagged. Each entry is a Python regex with optional flags ('i' ignorecase, 'm' multiline).",
+  "hard": {
+    "example_banned_phrase": {"pattern": "\\bvery unique\\b", "flags": "i", "message": "Rewrite: 'unique' is not gradable."}
+  },
+  "warn": {
+    "example_tell": {"pattern": "\\bdelve\\b", "flags": "i"}
+  }
+}

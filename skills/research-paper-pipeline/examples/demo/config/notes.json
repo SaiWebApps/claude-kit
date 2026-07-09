@@ -1,0 +1,20 @@
+{
+  "_comment": "Demo citations. Real, public sources.",
+  "notes": {
+    "gawande": {
+      "full": "Atul Gawande, The Checklist Manifesto: How to Get Things Right (New York: Metropolitan Books, 2009).",
+      "short": "Gawande, The Checklist Manifesto.",
+      "patterns": [["A", "(Gawande) \\(2009\\)"], ["B", " \\(Gawande, 2009\\)"]]
+    },
+    "pronovost": {
+      "full": "Peter Pronovost et al., \"An Intervention to Decrease Catheter-Related Bloodstream Infections in the ICU,\" New England Journal of Medicine 355, no. 26 (2006): 2725-2732.",
+      "short": "Pronovost et al., \"An Intervention to Decrease Catheter-Related Bloodstream Infections.\"",
+      "patterns": [["A", "(Pronovost et al\\.) \\(2006\\)"], ["B", " \\(Pronovost et al\\., 2006\\)"]]
+    },
+    "perrow": {
+      "full": "Charles Perrow, Normal Accidents: Living with High-Risk Technologies (New York: Basic Books, 1984).",
+      "short": "Perrow, Normal Accidents.",
+      "patterns": [["A", "(Perrow) \\(1984\\)"], ["B", " \\(Perrow, 1984\\)"]]
+    }
+  }
+}
