@@ -33,7 +33,8 @@ WARN = {
     "underscore":        re.compile(r"\bunderscor(?:e|es|ing)\b", re.I),
     "moreover_opener":   re.compile(r"^\s*(?:moreover|furthermore|additionally)\b", re.I),
     "not_just_but":      re.compile(r"\bnot just\b.{0,60}\b(?:but|it'?s)\b", re.I),
-    "spaced_en_dash":    re.compile(r"\s–\s"),
+    # NOTE: the spaced EN-dash (' – ') is Sai's positive punctuation fingerprint (see voice/profiles/sai.md),
+    # NOT an LLM tell — it is deliberately NOT flagged here. The em-dash ('—') remains a HARD ban above.
     "casual_attribution": re.compile(r"\band colleagues\b|\bresearchers (?:found|showed|examined|re-examined)\b|\ba (?:standard|recent) (?:study|benchmark|trial)\b", re.I),
     "ai_lexicon":        re.compile(r"\b(tapestry|multifaceted|leverage|leverages|leveraging|showcase|showcases|realm|landscape|seamless|seamlessly|robust|pivotal|crucial|myriad|plethora|nuanced|holistic|synerg\w+|treasure trove|boasts?|navigat\w+ the)\b", re.I),
     "crucial_role":      re.compile(r"plays? a (?:crucial|vital|key|pivotal|significant) role", re.I),
@@ -55,16 +56,27 @@ def load_rules(path):
     WARN = {k: re.compile(v["pattern"], _flags(v.get("flags")))
             for k, v in data.get("warn", {}).items()}
 
-def is_meta(line):
-    s = line.lstrip()
-    return s.startswith(("#", "*", "---", ">", "|"))
+def strip_markup(line):
+    """Strip leading markdown structure (headings, blockquotes, list bullets) and table pipes so the
+    PROSE inside bullets/headings/cells is still linted — instead of skipping the whole line, which let
+    LLM tells and even a HARD em-dash escape the gate. Returns '' for a pure hr / table-separator row."""
+    s = re.sub(r"^\s*(?:[>#]\s*)+", "", line)          # headings, blockquotes (possibly nested)
+    s = re.sub(r"^\s*(?:[-*+]\s+|\d+\.\s+)", "", s)      # unordered / ordered list bullets
+    s = s.replace("|", " ")                             # table cell dividers -> spaces (lint the cells)
+    if set(s.strip()) <= set("-: "):                    # pure hr / table-separator row -> no prose
+        return ""
+    return s.strip()
 
 def split_sentences(text):
     return [x for x in re.split(r"(?<=[.!?])\s+", text) if x.strip()]
 
 def lint(path):
     raw = open(path, encoding="utf-8").read().splitlines()
-    body = [(i + 1, ln) for i, ln in enumerate(raw) if ln.strip() and not is_meta(ln)]
+    body = []
+    for i, ln in enumerate(raw):
+        prose = strip_markup(ln)
+        if prose:
+            body.append((i + 1, prose))
     hard = {k: [] for k in HARD}
     warn = {k: [] for k in WARN}
     for lineno, ln in body:

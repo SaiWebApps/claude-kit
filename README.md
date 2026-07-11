@@ -19,7 +19,7 @@ After installation, start a Claude Code session and try:
 
 | Directory | Contents | Purpose |
 |-----------|----------|---------|
-| `skills/` | 10 skill definitions | Slash commands that extend Claude Code |
+| `skills/` | 12 skill definitions | Slash commands that extend Claude Code |
 | `agents/` | 10 agent perspectives | Specialized viewpoints for multi-perspective reasoning |
 | `patterns/` | 4 pattern guides with examples | Reusable templates for building your own skills |
 | `hooks/` | Behavioral enforcement scripts | Pre/post tool-use guardrails |
@@ -31,7 +31,8 @@ After installation, start a Claude Code session and try:
 
 | Skill | Description |
 |-------|-------------|
-| `forge` | Multi-perspective answer + hostile evidence-gated verification behind a JS gate |
+| `dev` | Trustworthy software-development lifecycle (explore→plan→code→unit/integration/functional/E2E→product-owner) with a mandatory undo/mutation test, an independent skeptic, and execution-evidence gates. Language-agnostic via a per-repo adapter |
+| `forge` | Multi-perspective answer + hostile evidence-gated verification behind a JS gate (incl. the mutation gate) |
 | `ship` | Atomic commit-and-push; asks where to ship on first use, remembers per-repo, creates the repo if missing |
 | `retro` | Session retrospective — catalog mistakes, extract learnings |
 | `build-fix` | Iterative build-fix cycles for JVM projects |
@@ -41,6 +42,7 @@ After installation, start a Claude Code session and try:
 | `agent-feedback` | Route async feedback to an agent's queue |
 | `agent-status` | Show agent feedback queues and memory sizes |
 | `persona` | Switch between role-based contexts |
+| `research-paper-pipeline` | Gate-first academic paper → venue-conformant, in-voice journal submission (swappable venue + voice profiles) |
 
 ## Patterns
 

@@ -16,7 +16,7 @@ ok(skill.includes(TAIL), `SKILL.md must document the exact assurance tail "${TAI
 const MAX_VERIFY = (code.match(/const MAX_VERIFY\s*=\s*(\d+)/) || [])[1]
 ok(MAX_VERIFY && new RegExp('cap of \\*?\\*?' + MAX_VERIFY + '\\b').test(skill) || skill.includes(`cap of **${MAX_VERIFY}**`) || skill.includes(`cap of ${MAX_VERIFY}`), `SKILL.md must state the per-cycle cap of ${MAX_VERIFY}`)
 // 3. load-bearing capabilities the doc must mention (drift catches if a fix is reverted but doc kept)
-for (const s of ['PRIME', 'force-load', 'watchdog', 'TaskStop', 'background', 'budget.spent()', 'breadth-FIRST', 'NO new always-on hooks', 'wrong-approach']) {
+for (const s of ['PRIME', 'force-load', 'watchdog', 'TaskStop', 'background', 'budget.spent()', 'breadth-FIRST', 'NO new always-on hooks', 'wrong-approach', 'mutation']) {
   ok(skill.includes(s), `SKILL.md must mention "${s}"`)
 }
 // 4. banned stale over-claims must be ABSENT (P26)

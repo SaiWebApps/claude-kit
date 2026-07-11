@@ -11,7 +11,7 @@ Think about design BEFORE code gets written. Challenge premises. Check constrain
 ## Existing Patterns Over Novel Solutions
 
 - **When the design gets complicated, the premise is probably wrong.** If you're threading new parameters through 4 classes or building overlay/merge logic — stop. Ask: "Is there an existing pattern in this codebase that already solves this?"
-- **Check how the codebase already handles the same category of thing.** Before proposing a new mechanism, search for prior art. If the repo already has `tgs_dozer.properties`, `tgs_morpheus.properties` as beta cluster configs, a new one should follow the same pattern.
+- **Check how the codebase already handles the same category of thing.** Before proposing a new mechanism, search for prior art. If the repo already has `app_staging.properties`, `app_beta.properties` as environment configs, a new one should follow the same pattern.
 - **Don't invent new abstractions when extending an existing one works.** Adding a value to an enum + a config file is always simpler than creating a parallel system.
 - **Early premises are the most dangerous.** A wrong assumption made in minute 5 compounds into a wrong architecture by minute 50. When complexity grows, trace back to the earliest decision.
 
@@ -20,7 +20,7 @@ Think about design BEFORE code gets written. Challenge premises. Check constrain
 - **Understand constraints BEFORE building.** Your runtime environment has constraints (sandboxing, network restrictions, auth boundaries). Ask "will the environment allow this?" before writing a single line of code.
 - **Question the premise before adding complexity.** If a solution requires 3+ new components, stop and ask: is the thing I'm trying to fix even worth fixing?
 - **Never replace something that works with something "better" without verifying the new thing works in this environment.**
-- **Read rules, then obey them.** If LEARNINGS.md says "AMI entities -> Cassandra", do not use TSS for AMI entities.
+- **Read rules, then obey them.** If LEARNINGS.md says "entity type A -> store X", do not use store Y for type A.
 - **Stop proposing. Start reasoning.** When a solution fails, explain WHY before proposing the next thing. Identify which constraint killed it and verify the next proposal doesn't hit the same one.
 
 ## End-to-End Thinking
@@ -42,7 +42,7 @@ Before creating ANY new service or feature that handles a common capability (aut
 4. **Get explicit approval** before proceeding
 5. **Use the chosen tool/SDK** — don't hand-roll what a package does better
 
-The `research-before-build.sh` hook enforces this mechanically.
+Treat this as a hard gate before hand-rolling any common capability.
 
 ## Read Before Act
 

@@ -2,6 +2,7 @@
 # PostToolUse hook: SESSION-END REMINDER
 # Fires after successful commits to remind about /retro.
 # Also detects session-ending signals.
+# Canonical rule (ENFORCES): CLAUDE.md § Session Hygiene — run /retro before ending a session. See docs/rule-map.md.
 #
 # Protocol:
 #   exit 0 + {"systemMessage":"..."} = inject reminder

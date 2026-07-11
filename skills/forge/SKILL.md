@@ -100,10 +100,12 @@ is the backstop for a pathological hang.
 6. **GATE (JS)** — `verdict = PASS` only if `computeGate` finds **no** REVISE reason. Triggers (all in code):
    digest-not-loaded, change-task-without-git-grounding, bundled multi-fact claim, deferred claim, non-PROVEN/
    missing/duplicate skeptic, any claim (ANY stakes) not re-verified by a matching-id skeptic, blocking
-   adversary finding, unaddressed REPEAT, fabricated citation, audit/coverage owed-but-short, E2/E3 violation.
-   Enforced by committed `node` tests: `forge.classify` (64), `forge.gate` (32 + 6 adversary-trigger),
+   adversary finding, unaddressed REPEAT, fabricated citation, audit/coverage owed-but-short, E2/E3 violation,
+   **a change-task fix not proven by an undo/mutation test** (revert the fix → the guarding test MUST go RED; a
+   test that stays green is fake — a check that cannot fail is not a check).
+   Enforced by committed `node` tests: `forge.classify` (64), `forge.gate` (30 + 6 adversary-trigger),
    `forge.coverage`, `forge.budget`, `forge.noprogress`, `forge.order`, `forge.wave`, `forge.receipts`,
-   `forge.panel`, `forge.effort`, `forge.fastpath`, `forge.report-bound`, `forge.memory` — all run by `run-tests.sh`.
+   `forge.panel`, `forge.effort`, `forge.fastpath`, `forge.report-bound`, `forge.memory`, `forge.skill-sync`, `forge.mutation`, `forge.terminal` — all run by `run-tests.sh`.
 7. **REVISE loop** — feed back only the must-fix items; re-verify; per-cycle verify cap of **8** claims; cap
    **2** cycles + a `budget.spent()` token ceiling; a normalized no-progress check stops a 1-char dodge.
 
@@ -118,6 +120,12 @@ truncates only the answer body, declared, to stay under the output cap). The ver
 - `PASS — RISK 2/3: byte-quote audit + skeptic (no adversaries)` — medium risk; claims re-verified + audited.
 - `PASS — RISK 1/3: per-claim skeptic only` — low risk; every claim still independently re-verified.
 - `PARTIALLY-VERIFIED` — the gate could not clear a BLOCKER within the cap (reasons listed).
+
+The result also carries a **terminal state** naming WHY the run ended, so a faked or broken-trust-root run can't
+hide behind a bare `PARTIALLY-VERIFIED`: `DONE` · `GAMING-DETECTED` (a check was faked — a still-green mutation
+test or a fabricated citation) · `INTEGRITY-COMPROMISED` (the force-load trust root did not load) ·
+`STUCK-OSCILLATING` (a revise made no progress) · `STUCK-BUDGET` (hit the cycle/token cap unproven) ·
+`STUCK-INCONCLUSIVE` (verification itself could not run — unverified ≠ refuted).
 
 ## After it returns
 - **PASS** — the draft survived independent re-verification AND the force-load digest loaded. Read DATA ABSENT
@@ -135,8 +143,14 @@ truncates only the answer body, declared, to stay under the output cap). The ver
 - If the **force-load digest fails to load**, the gate blocks PASS and DATA ABSENT says so — forge will not
   certify an answer it couldn't vet against prior incidents.
 
-## Reused primitives (independently callable; `/forge` inlines their prompt logic)
-- `~/.claude-work/workflows/adversarial-trio.js` — the standalone adversary attack (`/adversary`). `/forge`
-  inlines only **3** of its roles (DEPTH / HONESTY / REPEAT); it dropped SPEED (spurious blocking findings).
-- `~/.claude-work/workflows/single-skeptic.js` — one-claim re-verification with FABRICATED-CITATION and
-  absence positive-control rules.
+## Adversary + skeptic logic (inlined in `forge.js` — no separate files to install)
+The adversaries and the per-claim skeptic are defined **inline in `forge.js`** (`advCommon` / `DEPTH_ROLE` /
+`skepticPrompt`), not as standalone scripts — `/forge` owns the only copy:
+- **Adversaries** — only **3** roles fire (DEPTH / HONESTY / REPEAT); the old SPEED role was dropped (it
+  produced spurious blocking findings).
+- **Per-claim skeptic** — one-claim re-verification with the FABRICATED-CITATION and absence positive-control
+  rules.
+
+> Earlier drafts referenced standalone `adversarial-trio.js` / `single-skeptic.js` files under
+> `~/.claude-work/workflows/`. Those were never shipped — the logic lives inline in `forge.js`. If you want them
+> as independently callable primitives, extract them from `forge.js`; do not assume they exist on disk.

@@ -27,6 +27,9 @@ if (!task && !draft0) {
 const MAX_VERIFY = 8       // cap claims sent to the per-claim skeptic per cycle (cost control; overflow forces non-PASS)
 const MAX_CYCLES = 2       // canonical 2-attempt spiral limit (CLAUDE.md)
 const MAX_REPORT_CHARS = 24_000  // P31/P32: keep the human report under the output-token cap (truncate ONLY the draft body)
+// Kit config base — a SHELL expression agents resolve (CLAUDE_CONFIG_DIR, default ~/.claude) to find the
+// force-load sources. forge.js itself has no fs; it hands this string to agents who resolve + Read under it.
+const KIT_BASE = '${CLAUDE_CONFIG_DIR:-$HOME/.claude}'
 const RESERVE    = 80_000  // stop starting a cycle we can't finish, only when a token target is set
 const DEFAULT_TOKEN_CEILING = 1_200_000  // P9: self-imposed ceiling when the user set NO token target — bounds a
                                          // runaway run BETWEEN cycles. budget.spent() is the only in-JS resource
@@ -219,6 +222,7 @@ const SKEPTIC_SCHEMA = {
     quoteMatches:      { type: 'boolean' },
     positiveControlOk: { type: 'boolean' },
     evidenceItemsCount:{ type: 'number' },
+    mutationVerdict:   { type: 'string', enum: ['RED_THEN_GREEN', 'STILL_GREEN', 'NOT_RUN'] },  // change-task undo test (optional; the gate reads it)
     note:              { type: 'string' },
   },
   required: ['claimId', 'verdict', 'citedFileChecked', 'quoteMatches', 'positiveControlOk', 'evidenceItemsCount'],
@@ -276,12 +280,16 @@ RULES:
   if the claim carries NO checkable file:line/QUOTE (a prose/reasoning claim), there is nothing to mismatch —
   set quoteMatches=true and citedFileChecked=false (the gate is claim-aware and skips the file check for these).
 ${isAbsence(c.text) ? `- This is an ABSENCE claim. It is UNPROVEN unless a SAME-source positive control (a known-present
-  sibling in the same dir/keyspace/table) returns >0 in the SAME connection. Set positiveControlOk accordingly;
+  sibling in the same dir/table/namespace) returns >0 in the SAME source/connection. Set positiveControlOk accordingly;
   if you cannot run the control, verdict=UNPROVEN.` : `- positiveControlOk is not applicable here; set it true.`}
 - evidenceItemsCount = files Read + commands run this turn. If 0, your verdict is void — return UNPROVEN.
+${isChangeTask ? `- MUTATION (this is a change task): if this claim asserts a behavior that code FIXED/CHANGED and a guarding
+  test exists, run the UNDO TEST — revert ONLY the fix, run the test: it MUST go RED (if it STILL PASSES, the test
+  is fake → mutationVerdict='STILL_GREEN'); restore, confirm GREEN → mutationVerdict='RED_THEN_GREEN'. No runnable
+  guarding test → mutationVerdict='NOT_RUN'. Omit mutationVerdict when this claim is not a code-behavior claim.` : ''}
 
 Your FINAL action MUST be a single StructuredOutput call:
-claimId=${c.id}, verdict, citedFileChecked, quoteMatches, positiveControlOk, evidenceItemsCount, note(one line).`
+claimId=${c.id}, verdict, citedFileChecked, quoteMatches, positiveControlOk, evidenceItemsCount${isChangeTask ? ', mutationVerdict(if applicable)' : ''}, note(one line).`
 
 const advCommon = (draftText) => `You are an ADVERSARIAL reviewer of a PRIMARY AI (Claude) working for an
 impatient expert with ZERO tolerance for laziness, fabrication, or wasted time. You have full tool access
@@ -332,8 +340,8 @@ out, blockingFindings=0 is correct. Do NOT manufacture blocking findings to hit 
 const REPEAT_ROLE = `
 YOUR ROLE: REPEAT VIOLATION HUNTER. Assume the primary is committing a DOCUMENTED failure mode and calling
 it new. Your FIRST actions MUST be:
-  Read: ~/.claude-work/skills/retro/SKILL.md   (anti-patterns table near the bottom)
-  Read: ~/.claude-work/CLAUDE.md               (each rule names a documented incident)
+  Read: ${KIT_BASE}/skills/retro/SKILL.md   (anti-patterns table near the bottom)
+  Read: ${KIT_BASE}/CLAUDE.md               (each rule names a documented incident)
 For each behavior in the draft: matches a retro anti-pattern → REPEAT VIOLATION (cite #N, double severity);
 matches a CLAUDE.md rule → REPEAT INCIDENT (cite the header); genuinely new → NEW. repeatViolations = count of
 REPEAT VIOLATION/INCIDENT NOT already mechanically addressed in the draft. You may NOT report zero without
@@ -403,7 +411,7 @@ const regexThird =
   /\btest|coverage|prove|\bqa\b/.test(t)                       ? 'tester' :
   /deploy|infra|cost|cluster|\bops\b|build/.test(t)            ? 'ops' :
   CODE_RE.test(t)                                              ? 'explorer' :
-  /pipeline|curation|kafka|cassandra|entity|trinity/.test(t)   ? 'domain' :
+  /pipeline|data ?model|\bschema\b|migration|\bdomain\b|\bentity\b|business logic/.test(t) ? 'domain' :
   /\bdoc|best practice|library|prior|existing|reuse/.test(t)   ? 'prior-art' :
   /usability|ux|operator|error message/.test(t)               ? 'user-advocate' :
   'implementer'
@@ -628,7 +636,7 @@ function riskScore(claimObjs, draftText, conflicts) {
 
 // >>> COMPUTE-GATE (pure verdict function; unit-tested by forge.gate.test.mjs via extract-and-eval —
 // keep self-contained: only `isProven` (module helper) + its args, NO closures, NO agent calls) >>>
-function computeGate({ claimObjs, high, sv, toSkeptic, adv, audit, cov, runAdversaries, runAudit, coverageOwed, anyHigh, deferred, maxVerify, digestOk, isChangeTask, gitGroundingOk }) {
+function computeGate({ claimObjs, high, sv, toSkeptic, adv, audit, cov, runAdversaries, runAudit, coverageOwed, anyHigh, deferred, maxVerify, digestOk, isChangeTask, gitGroundingOk, mutationOwed }) {
   const advs = adv ? [adv.depth, adv.honesty, adv.repeat].filter(Boolean) : []
   const evidencedAdvs = advs.filter((a) => a && a.hasEvidence && (a.evidenceItemsCount || 0) > 0)
   const blocking = advs.reduce((n, a) => n + (a.blockingFindings || 0), 0)  // includes the REPEAT adversary
@@ -655,9 +663,18 @@ function computeGate({ claimObjs, high, sv, toSkeptic, adv, audit, cov, runAdver
   const receiptBad  = cov ? (cov.receiptMismatchCount || 0) : 0          // E2
   const highUncov   = cov ? (cov.highRelevanceUncovered || 0) : 0        // E3
 
+  // MUTATION: aggregate the per-claim skeptics' undo-test result (reads each skeptic's mutation-verdict
+  // field below — coverage-gated). A single STILL_GREEN (fake test) dominates; else RED_THEN_GREEN if any
+  // skeptic proved it; else NOT_RUN. Only gated when mutationOwed (a change task with a load-bearing claim).
+  const mutMvs = sv.map((v) => v && v.mutationVerdict).filter(Boolean)
+  const mutationVerdict = mutMvs.includes('STILL_GREEN') ? 'STILL_GREEN' : mutMvs.includes('RED_THEN_GREEN') ? 'RED_THEN_GREEN' : 'NOT_RUN'
+
   const reasons = []
   if (!digestOk)                       reasons.push(`[PRIME] prior-learnings digest did not load (evidenceItemsCount<1) — forge MUST force-load retros/memories/settings before it answers; cannot PASS.`)
   if (isChangeTask && !gitGroundingOk) reasons.push(`[PRECISION] change-verification task but breadth never ran git status/diff — the actually-changed files are not grounded (the flagship miss); cannot PASS.`)
+  if (mutationOwed && mutationVerdict !== 'RED_THEN_GREEN') reasons.push(mutationVerdict === 'STILL_GREEN'
+    ? `[MUTATION] the guarding test STILL PASSES with the fix reverted — the test is fake (a check that cannot fail is not a check); cannot PASS.`
+    : `[MUTATION] change task owed an undo/mutation test (revert the fix → the guarding test must go RED) but it was ${mutationVerdict ? `'${mutationVerdict}'` : 'not run'}; execution-unproven; cannot PASS.`)
   if (deferred > 0)                    reasons.push(`[GATE] ${deferred} claim(s) deferred beyond the verify cap (${maxVerify}) — unverified; cannot PASS.`)
   if (skepticMissing > 0)              reasons.push(`[GATE] ${skepticMissing} skeptic verdict(s) missing (agent threw/empty) — claim(s) unverified; cannot PASS.`)
   if (skepticFail.length)              reasons.push(`[HONESTY] ${skepticFail.length} claim(s) not PROVEN-with-evidence: ${skepticFail.map((v) => `#${v.claimId}=${v.verdict}`).join(', ')}`)
@@ -693,6 +710,7 @@ function computeGate({ claimObjs, high, sv, toSkeptic, adv, audit, cov, runAdver
   if (deferred > 0)   mustFixLines.push(`- [SCOPE] consolidate to <= ${maxVerify} load-bearing claims, or expect the extras to remain unverified.`)
   if (!digestOk)      mustFixLines.push(`- [PRIME] re-run the force-load: Read ~/.claude-work/CLAUDE.md + retro anti-patterns + settings.json + the panel-role memories; forge cannot certify without first loading what it was taught.`)
   if (isChangeTask && !gitGroundingOk) mustFixLines.push(`- [PRECISION] run git status --porcelain + git diff --name-only in breadth and verify EACH actually-changed file is covered.`)
+  if (mutationOwed && mutationVerdict !== 'RED_THEN_GREEN') mustFixLines.push(`- [MUTATION] revert the fix hunk, run the guarding test → confirm it goes RED (not STILL_GREEN), restore → confirm GREEN; paste both. A test that passes without the fix is fake.`)
 
   return {
     verdict, reasons, mustFix: mustFixLines.join('\n'),
@@ -700,10 +718,31 @@ function computeGate({ claimObjs, high, sv, toSkeptic, adv, audit, cov, runAdver
                evidencedAdvs: evidencedAdvs.length, runAdversaries, runAudit, coverageOwed,
                audited: !!audit, checkableHigh, everyHighReverified, everyClaimReverified, dupSkepticIds,
                evidenceShort, auditShort, deferred, digestOk: !!digestOk, gitGroundingOk: !!gitGroundingOk,
+               mutationOwed: !!mutationOwed, mutationVerdict: mutationVerdict || null,
                reviewedReceipts: cov ? (cov.reviewedReceipts || 0) : 0, receiptBad, highUncov },
   }
 }
 // <<< COMPUTE-GATE <<<
+
+// >>> TERMINAL-STATE (six honest terminal states à la make-no-mistakes, DERIVED from the gate result + loop
+// context — ADDITIVE: does NOT replace computeGate's PASS/REVISE, it just names WHY a run ended so a fake or a
+// broken-trust-root run can't hide behind a bare "PARTIALLY-VERIFIED". Pure; extracted by forge.terminal.test.mjs.
+//   DONE                 = clean pass
+//   GAMING-DETECTED      = a check was faked (STILL-green mutation test / fabricated citation or read-receipt)
+//   INTEGRITY-COMPROMISED= the force-load trust root (digest) did not load — forge can't vet against prior incidents
+//   STUCK-OSCILLATING    = a revise made no real progress (1-char dodge / ping-pong)
+//   STUCK-BUDGET         = hit the cycle/token cap still unproven
+//   STUCK-INCONCLUSIVE   = verification itself could not run (unverified != refuted) >>>
+function terminalState({ gateVerdict, reasons, noProgress, budgetExhausted, cyclesUsed, maxCycles }) {
+  if (gateVerdict === 'PASS') return 'DONE'
+  const r = (reasons || []).join(' ')
+  if (/STILL PASSES|fabricated/i.test(r))                      return 'GAMING-DETECTED'
+  if (/digest did not load/i.test(r))                         return 'INTEGRITY-COMPROMISED'
+  if (noProgress)                                             return 'STUCK-OSCILLATING'
+  if (budgetExhausted || ((maxCycles || 0) > 0 && (cyclesUsed || 0) >= maxCycles)) return 'STUCK-BUDGET'
+  return 'STUCK-INCONCLUSIVE'
+}
+// <<< TERMINAL-STATE <<<
 
 // ================================================== VERIFY + GATE (one cycle, ONE concurrent wave)
 async function verifyAndGate(draftText, claimStrings, conflicts, cycle) {
@@ -753,7 +792,7 @@ async function verifyAndGate(draftText, claimStrings, conflicts, cycle) {
 
   // ---- GATE (pure JS) ----
   phase('Gate')
-  const g = computeGate({ claimObjs, high, sv, toSkeptic, adv, audit, cov, runAdversaries, runAudit, coverageOwed, anyHigh, deferred, maxVerify: MAX_VERIFY, digestOk, isChangeTask, gitGroundingOk })
+  const g = computeGate({ claimObjs, high, sv, toSkeptic, adv, audit, cov, runAdversaries, runAudit, coverageOwed, anyHigh, deferred, maxVerify: MAX_VERIFY, digestOk, isChangeTask, gitGroundingOk, mutationOwed: isChangeTask && anyHigh })
 
   return { cycle, risk, verdict: g.verdict, reasons: g.reasons, mustFix: g.mustFix,
     claimObjs, high, med, anyHigh, runAdversaries, runAudit, coverageOwed, deferred,
@@ -794,6 +833,11 @@ const terminatedBy =
   result.verdict === 'PASS' ? 'PASS' :
   cycle >= MAX_CYCLES ? `REVISE cap (${MAX_CYCLES} cycles) reached` :
   !budgetOk() ? 'token budget reserve hit' : 'no further progress'
+
+// Six honest terminal states (names WHY the run ended — a fake or broken-trust-root run can't hide behind PARTIALLY-VERIFIED).
+const terminal = terminalState({ gateVerdict: result.verdict, reasons: result.reasons,
+  noProgress: terminatedBy === 'no further progress', budgetExhausted: !budgetOk(),
+  cyclesUsed: cycle, maxCycles: MAX_CYCLES })
 
 // =================================================================== OUTPUT (JS)
 const finalVerdict = result.verdict === 'PASS' ? 'PASS' : 'PARTIALLY-VERIFIED'
@@ -836,7 +880,7 @@ const blockers = finalVerdict === 'PARTIALLY-VERIFIED' ? result.reasons.slice() 
 const report = [
   `# /forge result: ${finalVerdict} — ${assurance}`, ``,
   `**Task:** ${task}`,
-  `**Terminated by:** ${terminatedBy} · cycles: ${cycle} · panel: ${panel.join(', ')} · breadth HIGH candidates: ${highPaths.length}`,
+  `**Terminated by:** ${terminatedBy} · terminal state: ${terminal} · cycles: ${cycle} · panel: ${panel.join(', ')} · breadth HIGH candidates: ${highPaths.length}`,
   `**Prior-learnings force-load:** ${result.metrics.digestOk ? 'LOADED' : 'FAILED (gate blocked)'} · breadth-directed mandatory reads: ${mandatoryReads.length} (git-changed: ${changedFiles.length}) · change-task: ${isChangeTask}`,
   `**Verdict basis (JS-computed):** RISK=${result.risk}/3 skepticFail=${result.metrics.skepticFail} blocking=${result.metrics.blocking} repeats=${result.metrics.repeats} fabricatedCitations=${result.metrics.fabricated} evidencedAdversaries=${result.metrics.evidencedAdvs} receiptMismatch=${result.metrics.receiptBad} highRelevanceUnread=${result.metrics.highUncov} deferred=${result.metrics.deferred}`,
   `**Verifier evidence audit:** ${verifierAudit}`, ``,
@@ -848,5 +892,5 @@ const report = [
   handoff ? `\n${handoff}` : '',
 ].join('\n')
 
-return { verdict: finalVerdict, assurance, draft: curDraft, cycles: cycle, risk: result.risk,
+return { verdict: finalVerdict, assurance, terminal, draft: curDraft, cycles: cycle, risk: result.risk,
   terminatedBy, metrics: result.metrics, reasons: result.reasons, report }

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # PreToolUse hook: Audits git commit messages against staged file paths.
+# Canonical rule (ENFORCES): CLAUDE.md § Session Hygiene — "every claim in a commit message comes from
+#   the diff" (rule h). See docs/rule-map.md.
 #
 # Problem: Claude writes commit messages from conversation context (what the
 # user asked for) rather than from the actual diff.

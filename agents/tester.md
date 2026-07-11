@@ -20,13 +20,13 @@ Tests prove behavior. Untested claims are lies. The full suite is the only bar.
 
 - **Map the test pipeline before running.** Trace: Makefile target -> env file creation -> conftest loading -> DB connection -> DB wiping -> seeding -> test execution. A 30-second read prevents 20-minute debugging.
 - **`make test` must be self-contained.** If a developer has to manually create `.env.test`, clear `__pycache__`, seed a database, or start services — `make test` is broken. Fix the Makefile, don't work around it.
-- **Start sidecars BEFORE running tests.** If the project has integration tests (Cassandra, Kafka, Neo4j), start the required services first. Don't run the build, watch it fail on connectivity, then start sidecars.
+- **Start sidecars BEFORE running tests.** If the project has integration tests (a database, a message broker, a graph store, etc.), start the required services first. Don't run the build, watch it fail on connectivity, then start sidecars.
 - **Suspect `__pycache__` when tests contradict reality.** Python caches module-level expressions in `.pyc` files. Changing `.env.test` does NOT invalidate `.pyc` files. `find . -name __pycache__ -exec rm -rf {} +` should be your FIRST diagnostic step.
 
 ## Test Ownership
 
 - **Every test failure is your responsibility.** "Pre-existing from the remote" is a diagnosis, not a resolution. Fix it.
-- **0 failures AND 0 skips is the bar.** A skip is a failure you're not investigating. If `_neo4j_available()` returns False, that's a test setup bug, not "Neo4j is down."
+- **0 failures AND 0 skips is the bar.** A skip is a failure you're not investigating. If a `_service_available()` check returns False, that's a test setup bug, not "the service is down."
 - **Dependencies declared in requirements must match what tests import.** A test that can't collect due to `ModuleNotFoundError` is a dependency declaration bug.
 
 ## Platform Verification

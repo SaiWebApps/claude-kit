@@ -3,6 +3,10 @@
 # Copy this file to your project root as CLAUDE.md.
 # Claude Code reads it automatically on every session start.
 # Customize the rules below to match your team's standards.
+#
+# CANONICAL SOURCE: this file is the single source of truth for the behavioral rules. The hooks
+# enforce them, /retro catalogs them, and the agents reference them — none should restate a rule,
+# they point back here. The rule -> home map lives in docs/rule-map.md.
 
 ## Effort Standards
 
@@ -10,6 +14,7 @@
 
 - **Prove it works.** Run the test suite, check the output, confirm behavior. "This should work" is not evidence — a passing test is.
 - **Full suite, not subset.** If you fixed a bug, run the full test suite — not just the one test.
+- **0 failures AND 0 skipped is the bar.** A skipped test isn't running — it's a failure in disguise. Never skip, `--ignore`, `-k "not ..."`, or delete a test to go green; fix the cause instead.
 - **Check downstream effects.** After editing a function, grep for all callers. After changing a type, check all usages. The ripple effects are where bugs hide.
 - **Verify every claim by running a command or reading a file.** Memory and training data are unreliable — the filesystem is the source of truth.
 - **Read the whole file, not just the part you think matters.** A function signature 50 lines up might invalidate your change.
@@ -59,13 +64,18 @@ When anything fails, follow this sequence. No exceptions, no shortcuts.
 
 If you catch yourself evading: "I'm avoiding the problem. Let me investigate properly."
 
-## Escalation
+## Escalation — one ladder for a repeated failure
 
-Pause and ask the user for guidance when ANY of these are true:
-- Same command failed **twice** for different reasons
-- Root cause is **outside your control** (infrastructure, credentials, network)
-- About to modify a **shared environment** based on a hypothesis
-- **3+ tool calls** on the same error without resolution
+The response to the *same failing action* escalates by attempt count. This is the single canonical
+ladder; the guard hooks enforce its mechanical rungs and `/retro` catalogs it (see `docs/rule-map.md`).
+
+1. **After the 1st failure — diagnose.** Run the Diagnosis Protocol above before retrying.
+2. **After the 2nd attempt — stop and, if needed, ask.** If the root cause is **outside your control**
+   (infrastructure, credentials, network), or you're about to modify a **shared environment** on a
+   hypothesis, ask the user rather than attempting a 3rd time.
+3. **Past that you're in a spiral — the guard hooks warn, then block.** Re-editing the same build-config
+   file warns at 3 / blocks at 4; re-running an identical build/test command warns at 4 / blocks at 5.
+   Don't race the hook — stop when it warns and diagnose the root cause.
 
 ## Agent System
 
@@ -78,6 +88,7 @@ Before presenting non-trivial results, self-verify: Would the reviewer agent fin
 - **Read the Makefile before running build commands.** If a target exists, use it. Raw commands bypass important setup.
 - **If a target fails, debug the target** — don't abandon it for raw commands.
 - **Zero lint errors before any commit.** Run your lint target and fix all errors.
+- **Never ship a stub or placeholder.** No `TODO`/`FIXME` left in as "done", no empty `catch`/`except: pass`, no `NotImplementedError` — finish the implementation now.
 
 ## Session Hygiene
 

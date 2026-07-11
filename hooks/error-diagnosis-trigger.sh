@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # PostToolUse hook: Triggers the error-diagnosis skill when a Bash command fails.
+# Canonical rule (ENFORCES): CLAUDE.md § Diagnosis Protocol (rule d) — Escalation ladder rung R1
+#   (diagnose after the 1st failure). See docs/rule-map.md.
 #
 # When a Bash command exits with a non-zero status, this hook injects a system
 # message forcing Claude to complete the error-diagnosis checklist before

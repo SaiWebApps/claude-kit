@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # PreToolUse hook: Detect workaround spirals -- repeated edits to the same file section
 # If the same file is edited 3+ times in a session, block and require diagnosis
+# Canonical rule (ENFORCES): CLAUDE.md § Escalation ladder rungs R3/R4 — warn at 3, block at 4. See docs/rule-map.md.
 
 INPUT=$(cat 2>/dev/null) || true
 [[ -z "$INPUT" ]] && exit 0

@@ -28,7 +28,7 @@ inspection) run inline — no separate planner step.
 - `/ship --amend` — amend the previous commit (use with care)
 
 ## Per-repo config (asked once, remembered forever)
-Stored at `${CLAUDE_CONFIG_DIR:-$HOME/.claude}/ship-configs/<repo-slug>.json` — written on first run,
+Stored at `${CLAUDE_CONFIG_DIR:-$HOME/.claude}/ship-configs/<repo-key>.json` (key = slug + 8-char path hash, so same-named repos never collide) — written on first run,
 read silently thereafter.
 
 ```json
@@ -49,8 +49,8 @@ No `co_author` field is honored — this skill never attributes.
 ## Procedure
 
 ### Step 0 — Load or initialize config
-1. `slug = basename "$(git rev-parse --show-toplevel)"`
-2. If `${CLAUDE_CONFIG_DIR:-$HOME/.claude}/ship-configs/<slug>.json` exists → load it, go to Step 1.
+1. `slug = basename "$(git rev-parse --show-toplevel)"`; `key = "$slug-$(printf '%s' "$(git rev-parse --show-toplevel)" | shasum | cut -c1-8)"` — the 8-char path hash makes the key **collision-safe**, so two different repos both named `api` never share one config.
+2. If `${CLAUDE_CONFIG_DIR:-$HOME/.claude}/ship-configs/<key>.json` exists → load it, go to Step 1.
 3. Else → run **First-Time Setup**.
 
 ### First-Time Setup — this is the "ask where to ship" step
@@ -92,6 +92,10 @@ attribution trailer.
 ```bash
 if ! git remote get-url "$REMOTE" >/dev/null 2>&1; then
   if [ "$create_if_missing" = true ]; then
+    # OWNER can be empty in autonomous mode with no pre-existing remote — fall back to the authed gh user so we
+    # never run the malformed `gh repo create "/slug"`. If still empty, STOP rather than create in the wrong place.
+    OWNER=${OWNER:-$(gh api --hostname "${GIT_HOST:-github.com}" user --jq .login 2>/dev/null)}
+    [ -z "$OWNER" ] && STOP "OWNER unknown and no authed gh user — cannot create the repo; set owner in config."
     # VISIBILITY: ask (interactive) / private (autonomous). gh --hostname makes this host-agnostic.
     gh repo create "$OWNER/$SLUG" --source . --remote "$REMOTE" --"$VISIBILITY" --description "<short>" \
       || GH_HOST="$GIT_HOST" gh api --hostname "$GIT_HOST" -X POST /user/repos -f name="$SLUG" -F private="$PRIVATE_BOOL"
@@ -108,7 +112,12 @@ stores no tokens.
 ### Step 6 — Commit & push
 ```bash
 git commit -m "<message>"                       # message ONLY — no attribution trailer
-git push "$REMOTE" "$(git branch --show-current)"
+BR=$(git branch --show-current)
+git push "$REMOTE" "$BR"
+# VERIFY the push actually landed — never report "shipped" on the push exit code alone (Step 7 claims a
+# *verified* sequence): confirm the remote branch now points at local HEAD.
+test "$(git rev-parse HEAD)" = "$(git ls-remote "$REMOTE" "refs/heads/$BR" | cut -f1)" \
+  || STOP "push exited 0 but remote $BR does not point at HEAD — investigate before claiming shipped."
 ```
 If rejected (remote ahead): `git pull --rebase "$REMOTE" <branch>`, retry once; if it fails again,
 STOP and report.

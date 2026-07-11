@@ -1,6 +1,6 @@
 ---
 name: prwalk
-description: "Walk through one or more GitHub PRs and produce a report with recommended file reading order. Invoke with '/prwalk <PR URL> [PR URL...]'. Uses gh CLI. Read-only: never modifies PRs, leaves comments, or pushes code."
+description: "Walk through one or more GitHub PRs and produce a review report: a synthesis + risk map + CI/review status first, then a recommended file reading order. Invoke with '/prwalk <PR URL> [PR URL...]'. Uses gh CLI. Read-only: never modifies PRs, leaves comments, or pushes code."
 ---
 
 # PR Walkthrough Skill
@@ -123,6 +123,10 @@ gh api repos/{org}/{repo}/pulls/{number}/commits --hostname <GH_HOST> --jq '.[] 
 
 # Full diff (for understanding change relationships)
 GH_HOST=<GH_HOST> gh pr diff {number} --repo {org}/{repo}
+
+# Existing review threads + CI status — what a reviewer most wants: what's already flagged and whether checks pass
+GH_HOST=<GH_HOST> gh pr view {number} --repo {org}/{repo} --json reviews,statusCheckRollup,comments \
+  --jq '{reviews: [.reviews[] | {author: .author.login, state}], checks: [.statusCheckRollup[] | {name: (.name // .context), conclusion: (.conclusion // .state)}]}'
 ```
 
 **Diff size limits:** For PRs with very large diffs (1000+ changed lines total), summarize using file-level stats rather than reading the full diff. Inform the user that the diff was too large for detailed analysis and offer to inspect specific files on request.
@@ -173,6 +177,12 @@ Format the output as follows:
 | 1 | #{number} | {org}/{repo} | {title} | {author} | {file_count} | +{adds}/-{dels} |
 
 **Summary:** {2-3 sentence summary of the overarching change across all PRs}
+
+### Synthesis + Risk (lead with this — it's what a reviewer needs before any reading order)
+- **What it does:** {1-2 sentences: the actual behavior change, from the diff — not the title}
+- **Risk map:** {the riskiest files/areas and why — schema / auth / migrations / concurrency / public API}
+- **CI:** {pass/fail/pending, from statusCheckRollup} · **Review state:** {approved / changes-requested / pending, from reviews}
+- **Check first:** {the 1-3 things to verify, tied to risk — not just the file tier}
 
 ### Suggested PR Reading Order (if multiple PRs)
 

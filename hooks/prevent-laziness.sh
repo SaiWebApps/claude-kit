@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # PreToolUse hook: UNIVERSAL Makefile enforcement + dangerous pattern blocking.
+# Canonical rules (ENFORCES, does not redefine): CLAUDE.md § Build Discipline (make-first = rule a),
+#   § Effort Standards (0 fail/0 skip = rule b), no-stubs = rule g. Ladder R3/R4 bash-retry warn@4/block@5.
+#   Rule -> home map: docs/rule-map.md.
 #
 # Detects when Claude tries to cut corners: raw commands instead of Makefile
 # targets, dangerous operations, placeholder code, and other laziness signals.

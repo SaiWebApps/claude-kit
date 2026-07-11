@@ -69,7 +69,7 @@ You are prosecuting Claude for malpractice in this session. Your job is to find 
 - Finding fewer than 3 violations means YOU FAILED
 - Every violation MUST have the exact quote or tool call as evidence
 - Rate each violation: MINOR (user unaffected), MAJOR (user had to correct), CRITICAL (wrong output delivered)
-- Check ~/.claude/agents/*.md, ~/CLAUDE.md, and your project's CLAUDE.md — was there a rule that should have prevented this? If yes, it's a REPEAT VIOLATION and gets double severity.
+- Check `$CLAUDE_CONFIG_DIR/agents/*.md` (default `~/.claude`), `$CLAUDE_CONFIG_DIR/CLAUDE.md` (your global harness — the canonical rule source), and your project's `CLAUDE.md` — was there a rule that should have prevented this? If yes, it's a REPEAT VIOLATION and gets double severity.
 - Do NOT accept "the user didn't mind" as a defense. The standard is perfection, not user tolerance.
 
 ## What you're checking:
@@ -136,7 +136,7 @@ For each violation and evasion found by the other agents, design a FIX that is:
 ## Fix hierarchy (prefer higher):
 1. **Hook** — a PostToolUse or PreToolUse hook that blocks the behavior mechanically
 2. **Agent constraint** — a hard constraint added to an agent definition that gets loaded every session
-3. **CLAUDE.md rule** — a STOP block in ~/CLAUDE.md or your project's CLAUDE.md
+3. **CLAUDE.md rule** — a STOP block in `$CLAUDE_CONFIG_DIR/CLAUDE.md` (your global harness) or your project's `CLAUDE.md`
 4. **LEARNINGS.md entry** — a documented rule with incident reference
 5. **Memory file** — a feedback memory entry (WEAKEST — only use if nothing else fits)
 
@@ -208,7 +208,7 @@ For each fix from the Fix Engineer:
 
 If a fix requires creating a hook:
 1. Write the hook script to `skills/retro/hooks/` or `.claude/hooks/`
-2. Add the hook to `.claude/settings.local.json`
+2. Add the hook to `settings.json` (the canonical file `install.sh` seeds to `$CLAUDE_CONFIG_DIR` — see `docs/rule-map.md` for the settings-file convention)
 3. Verify the hook is registered
 
 ---
@@ -271,7 +271,7 @@ Present to the user:
 | 24 | Stale __pycache__ caching skipif results | Build artifact ignorance |
 | 25 | Missing env vars in .env files | Incomplete setup |
 | 26 | Wrong query relationship direction | Domain model confusion |
-| 27 | Workaround spirals (2+ attempts at blocked thing) | Not stopping to diagnose |
+| 27 | Workaround spirals — self-stop by the 2nd attempt (advisory); the guard hook then warns at 3 and blocks at 4 (see CLAUDE.md § Escalation) | Not stopping to diagnose |
 | 28 | Not listening to user corrections | Sycophancy or stubbornness |
 | 29 | Gitignored files missed in renames | Incomplete grep |
 | 30 | Undeclared test dependencies | Incomplete dependency tracking |

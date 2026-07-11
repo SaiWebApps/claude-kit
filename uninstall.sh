@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # claude-kit uninstaller
-# Removes symlinks in ~/.claude/ that point into this repository.
-# Only removes symlinks -- never deletes regular files.
+# Removes symlinks in the Claude config dir ($CLAUDE_CONFIG_DIR, default ~/.claude) that point into this repo.
+# Only removes symlinks -- never deletes regular files (so seeded agent-memory / CLAUDE.md / settings.json,
+# which are COPIES, are intentionally left in place).
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TARGET_BASE="$HOME/.claude"
+TARGET_BASE="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 
 REMOVED=0
 
@@ -52,6 +53,10 @@ echo ""
 
 echo "Hooks:"
 remove_repo_symlinks "$TARGET_BASE/hooks" "hooks"
+echo ""
+
+echo "Workflows:"
+remove_repo_symlinks "$TARGET_BASE/workflows" "workflows"
 echo ""
 
 echo "======================"

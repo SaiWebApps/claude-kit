@@ -1,21 +1,25 @@
 #!/usr/bin/env bash
 # claude-kit installer
-# Symlinks skills, agents, hooks, and pattern examples into ~/.claude/
+# Symlinks skills, agents, hooks, pattern examples, and workflows into the Claude config dir
+# ($CLAUDE_CONFIG_DIR, default ~/.claude), and seeds agent-memory + a starter CLAUDE.md/settings.json.
 #
 # Usage:
-#   ./install.sh [--all|--skills-only|--agents-only|--hooks-only|--patterns-only]
+#   ./install.sh [--all|--skills-only|--agents-only|--hooks-only|--patterns-only|--workflows-only]
 #                [--dry-run] [--force]
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TARGET_BASE="$HOME/.claude"
+# Honor the user's Claude config dir if set (e.g. CLAUDE_CONFIG_DIR=~/.claude-work); else default to ~/.claude.
+# This MUST match where forge.js + its agents read the kit from.
+TARGET_BASE="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 
 # Defaults
 INSTALL_SKILLS=false
 INSTALL_AGENTS=false
 INSTALL_HOOKS=false
 INSTALL_PATTERNS=false
+INSTALL_WORKFLOWS=false
 DRY_RUN=false
 FORCE=false
 COMPONENT_SELECTED=false
@@ -28,6 +32,7 @@ while [[ $# -gt 0 ]]; do
       INSTALL_AGENTS=true
       INSTALL_HOOKS=true
       INSTALL_PATTERNS=true
+      INSTALL_WORKFLOWS=true
       COMPONENT_SELECTED=true
       ;;
     --skills-only)
@@ -46,6 +51,10 @@ while [[ $# -gt 0 ]]; do
       INSTALL_PATTERNS=true
       COMPONENT_SELECTED=true
       ;;
+    --workflows-only)
+      INSTALL_WORKFLOWS=true
+      COMPONENT_SELECTED=true
+      ;;
     --dry-run)
       DRY_RUN=true
       ;;
@@ -53,7 +62,7 @@ while [[ $# -gt 0 ]]; do
       FORCE=true
       ;;
     -h|--help)
-      echo "Usage: $0 [--all|--skills-only|--agents-only|--hooks-only|--patterns-only] [--dry-run] [--force]"
+      echo "Usage: $0 [--all|--skills-only|--agents-only|--hooks-only|--patterns-only|--workflows-only] [--dry-run] [--force]"
       echo ""
       echo "Flags:"
       echo "  --all            Install everything (default if no component flags given)"
@@ -61,6 +70,7 @@ while [[ $# -gt 0 ]]; do
       echo "  --agents-only    Only install agents"
       echo "  --hooks-only     Only install hooks"
       echo "  --patterns-only  Only install pattern examples"
+      echo "  --workflows-only Only install workflows (forge.js + its node tests)"
       echo "  --dry-run        Show what would be done without doing it"
       echo "  --force          Overwrite existing files/symlinks that conflict"
       exit 0
@@ -79,6 +89,7 @@ if [[ "$COMPONENT_SELECTED" == "false" ]]; then
   INSTALL_AGENTS=true
   INSTALL_HOOKS=true
   INSTALL_PATTERNS=true
+  INSTALL_WORKFLOWS=true
 fi
 
 # Counters
@@ -225,9 +236,47 @@ if [[ "$INSTALL_PATTERNS" == "true" ]]; then
   echo ""
 fi
 
-# --- Ensure supporting directories exist ---
+# --- Workflows (forge.js + its node tests) — symlinked like skills/agents ---
+if [[ "$INSTALL_WORKFLOWS" == "true" ]]; then
+  echo "Installing workflows..."
+  ensure_dir "$TARGET_BASE/workflows"
+  if [[ -d "$SCRIPT_DIR/workflows" ]]; then
+    for wf in "$SCRIPT_DIR/workflows"/*.js "$SCRIPT_DIR/workflows"/*.mjs "$SCRIPT_DIR/workflows/run-tests.sh"; do
+      [[ -e "$wf" ]] || continue
+      create_symlink "$wf" "$TARGET_BASE/workflows/$(basename "$wf")" || true
+    done
+  fi
+  echo ""
+fi
+
+# --- Seed agent-memory (COPY, not symlink — memory is mutated at runtime; never write back into the repo) ---
 ensure_dir "$TARGET_BASE/agent-memory"
+if [[ -d "$SCRIPT_DIR/examples/agent-memory" ]]; then
+  for mem_dir in "$SCRIPT_DIR/examples/agent-memory"/*/; do
+    [[ -d "$mem_dir" ]] || continue
+    role=$(basename "$mem_dir")
+    ensure_dir "$TARGET_BASE/agent-memory/$role"
+    target="$TARGET_BASE/agent-memory/$role/MEMORY.md"
+    if [[ -f "$target" ]]; then
+      :  # never overwrite the user's accumulated memory
+    elif [[ "$DRY_RUN" == "true" ]]; then
+      echo "[dry-run] cp ${mem_dir}MEMORY.md $target"
+    else
+      cp "${mem_dir}MEMORY.md" "$target" && echo "  SEEDED: $target"
+    fi
+  done
+fi
 ensure_dir "$TARGET_BASE/feedback"
+
+# --- Seed a starter CLAUDE.md + settings.json (COPY, only when absent — never clobber the user's own) ---
+seed_copy() {
+  local src="$1" dst="$2"
+  [[ -f "$src" ]] || return 0
+  if [[ -f "$dst" ]]; then return 0; fi  # keep the user's existing config
+  if [[ "$DRY_RUN" == "true" ]]; then echo "[dry-run] cp $src $dst"; else cp "$src" "$dst" && echo "  SEEDED: $dst"; fi
+}
+seed_copy "$SCRIPT_DIR/harness/CLAUDE.md" "$TARGET_BASE/CLAUDE.md"
+seed_copy "$SCRIPT_DIR/harness/examples/settings.json" "$TARGET_BASE/settings.json"
 
 # --- Summary ---
 echo "===================="
